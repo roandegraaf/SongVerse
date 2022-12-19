@@ -21,6 +21,10 @@ const App = () => {
           username: process.env.REACT_APP_SPOTIFY_CLIENT_ID,
           password: process.env.REACT_APP_SPOTIFY_CLIENT_SECRET,
         },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        data: `grant_type=password&username=${email}&password=${password}`,
       });
 
       // Update the state with the access token
