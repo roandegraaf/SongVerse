@@ -1,49 +1,52 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState } from 'react';
 import axios from 'axios';
+import 'react-spotify-auth/dist/index.css'
+
 
 const App = () => {
-  const [accessToken, setAccessToken] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [similarSongs, setSimilarSongs] = useState([]);
   const [songLink, setSongLink] = useState('');
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      // Use the Spotify API to exchange the email and password for an access token
-      const response = await axios.post('https://accounts.spotify.com/api/token', {
-        grant_type: 'password',
-        username: email,
-        password: password,
-      }, {
-        auth: {
-          username: process.env.REACT_APP_SPOTIFY_CLIENT_ID,
-          password: process.env.REACT_APP_SPOTIFY_CLIENT_SECRET,
-        },
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        data: `grant_type=password&username=${email}&password=${password}`,
-      });
+  const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
+  const REDIRECT_URI = "http://localhost:3000"
+  const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
+  const RESPONSE_TYPE = "token"
 
-      // Update the state with the access token
-      setAccessToken(response.data.access_token);
-    } catch (error) {
-      console.error(error);
+  const [token, setToken] = useState("")
+
+
+  useEffect(() => {
+    const hash = window.location.hash
+    let token = window.localStorage.getItem("token")
+
+    if (!token && hash) {
+      token = hash.substring(1).split("&").find(elem => elem.startsWith("access_token")).split("=")[1]
+
+      window.location.hash = ""
+      window.localStorage.setItem("token", token)
     }
-  };
+
+    setToken(token)
+
+  }, [])
+
+  const logout = () => {
+    setToken("")
+    window.localStorage.removeItem("token")
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       // Extract the song ID from the song link
-      const songId = songLink.split('/')[4];
+      const songExtract = songLink.split('/').pop();
+
+      const songId = songExtract.split('?')[0];
 
       // Use the Spotify API to search for similar songs
-      const response = await axios.get(`https://api.spotify.com/v1/tracks/${songId}/recommendations`, {
+      const response = await axios.get(`https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=0`, {
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          'Authorization': `Bearer ${token}`,
         },
         params: {
           limit: 50, // Set a limit of 50 similar songs
@@ -53,6 +56,7 @@ const App = () => {
       });
 
       // Update the state with the similar songs
+      console.log(response.data)
       setSimilarSongs(response.data.tracks);
     } catch (error) {
       console.error(error);
@@ -61,7 +65,7 @@ const App = () => {
 
   return (
       <div>
-        {accessToken ? (
+        {token ? (
             <form onSubmit={handleSubmit}>
               <label htmlFor="song-link">
                 Paste a Spotify song link:
@@ -73,35 +77,22 @@ const App = () => {
                 />
               </label>
               <button type="submit">Search</button>
+              <button onClick={logout}>Logout</button>
             </form>
         ) : (
-            <form onSubmit={handleLogin}>
-              <label htmlFor="email">
-                Email:
-                <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                />
-              </label>
-              <label htmlFor="password">
-                Password:
-                <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                />
-              </label>
-              <button type="submit">Log in</button>
-            </form>
+              <header className="App-header">
+                <h1>Spotify React</h1>
+                {!token ?
+                    <a href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}`}>Login
+                      to Spotify</a>
+                    : <button onClick={logout}>Logout</button>}
+              </header>
         )}
         {similarSongs.length > 0 && (
             <ul>
               {similarSongs.map(song => (
                   <li key={song.id}>
-                    {song.name} by {song.artists[0].name}
+                    <a href={song.uri} target="_blank">{song.name}</a> by {song.artists[0].name}
                   </li>
               ))}
             </ul>
