@@ -11,7 +11,6 @@ const App = () => {
   const REDIRECT_URI = "http://localhost:3000"
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
   const RESPONSE_TYPE = "token"
-  const spotifyApiUrl = 'https://api.spotify.com/v1';
 
   const [token, setToken] = useState("")
 
@@ -65,6 +64,59 @@ const App = () => {
     }
   };
 
+  const getUserId = () => {
+    if (token) {
+      const headers = { Authorization: `Bearer ${token}` }
+      return fetch("https://api.spotify.com/v1/me", { headers: headers })
+          .then(response => response.json())
+          .then(jsonResponse => {
+            if (jsonResponse) {
+              const { id, display_name, email, external_urls, images } = jsonResponse
+              const profile = {
+                user_id: id,
+                email: email,
+                name: display_name,
+                image: images[0].url,
+                url: external_urls.spotify
+              }
+              console.log(profile.user_id)
+              return profile
+            }
+          })
+    }
+  }
+
+  async function createPlaylist() {
+    // Set the necessary headers for the request
+    const playlistName = "test"
+    const userId = (await getUserId()).user_id
+    console.log(token)
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    // Set the body of the request to include the name of the playlist
+    const body = {
+      name: playlistName,
+    };
+
+    // Send a POST request to the Spotify API to create the playlist
+    try {
+      const url = `https://api.spotify.com/v1/users/${userId}/playlists`;
+      const response = await axios.post(url, body, { headers });
+
+      // The playlist has been successfully created if the response status is 201
+      if (response.status === 201) {
+        return response.data;
+      } else {
+        throw new Error('Failed to create playlist');
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   return (
 
       <div>
@@ -86,6 +138,7 @@ const App = () => {
                 />
               </label>
               <button type="submit">Search</button>
+              <button onClick={createPlaylist}>test</button>
               <button onClick={logout}>Logout</button>
             </form>
         ) : (
