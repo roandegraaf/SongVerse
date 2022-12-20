@@ -8,7 +8,7 @@ const App = () => {
   const [songLink, setSongLink] = useState('');
 
   const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
-  const REDIRECT_URI = "http://localhost:3000"
+  const REDIRECT_URI = "https://spotify.servertj.nl"
   const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
   const RESPONSE_TYPE = "token"
 
@@ -44,7 +44,7 @@ const App = () => {
       const songId = songExtract.split('?')[0];
 
       // Use the Spotify API to search for similar songs
-      const response = await axios.get(`https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=0`, {
+      const response = await axios.get(`https://api.spotify.com/v1/recommendations?limit=50&market=NL&seed_tracks=${songId}&target_popularity=0`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
