@@ -1,6 +1,6 @@
-import { useState, createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 import usePersistedState from "./usePersistedState";
-import React, { Component }  from 'react';
+import React from 'react';
 
 // register the context
 const ThemeContext = createContext({});

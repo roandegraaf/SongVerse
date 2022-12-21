@@ -3,6 +3,10 @@
   background-color: darkslategray;
 }
 
+.App-link {
+  color: dodgerblue;
+}
+
 body {
   background-color: darkslategray;
   color: white;
@@ -16,7 +20,7 @@ body {
   font-size: calc(10px + 2vmin);
 }
 
-.paragraph {
+.login-page .paragraph {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -26,22 +30,53 @@ body {
   text-align: center;
 }
 
-.App-link {
-  color: dodgerblue;
-}
-
-.btn {
+.login-page .btn {
+  color: #191414 !important;
   margin: 0;
   position: relative;
   left: 50%;
   transform: translate(-50%, 0%);
-  fill: #20c997;
+  background-color: #1db954 !important;
 }
 
-form, button {
-  display: inline-block;
+.login-page .btn:hover {
+  background-color: #138039 !important;
+  color: #FFFFFF !important;
 }
 
-button {
-  display: inline-block;
+.login-page .btn svg {
+  margin-right: 5px;
+  fill: #191414;
+  transition: 0.3s;
 }
+
+.login-page .btn:hover svg {
+  fill: #FFFFFF !important;
+  transition: 0.3s;
+}
+
+.main-page .song-link-label {
+  margin: 0;
+  position: relative;
+  left: 50%;
+  transform: translate(-50%, 0%);
+}
+
+.main-page input {
+  margin: 0;
+  position: relative;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  width: 35%;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.main-page .buttons {
+  position: relative;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  display: inline-block;
+  text-align: center;
+}
+

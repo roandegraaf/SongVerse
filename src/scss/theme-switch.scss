@@ -1,6 +1,8 @@
 #theme-switch {
   
-  position: relative;
+  position: fixed;
+  top: 5px;
+  right: 5px;
   width: fit-content;
   height: fit-content;
   touch-action: pan-x;

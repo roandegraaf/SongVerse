@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useThemeContext } from "../hooks/useThemeContext";
 import "../scss/theme-switch.scss";
-import React, { Component }  from 'react';
+import React from 'react';
 
 export default function ThemeSwitch() {
   const { darkMode, setDarkMode } = useThemeContext();
