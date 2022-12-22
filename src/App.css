@@ -80,3 +80,42 @@ body {
   text-align: center;
 }
 
+.song-grid {
+  margin-top: 50px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-gap: 20px;
+}
+
+.song {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .song {
+    background-color: var(--accent-1);
+  }
+}
+
+.song img {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+}
+
+.song-info {
+  margin-top: 10px;
+}
+
+.song-link {
+  margin-top: 10px;
+  color: #1db954;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+

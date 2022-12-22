@@ -6,7 +6,6 @@ import {ThemeProvider} from "./hooks/useThemeContext";
 import ThemeSwitch from "./components/ThemeSwitch";
 import "./scss/bootstrap.scss";
 
-
 const App = () => {
     const [similarSongs, setSimilarSongs] = useState([]);
     const [songLink, setSongLink] = useState('');
@@ -141,6 +140,21 @@ const App = () => {
                     <button type="button" className={"btn btn-primary"} onClick={handleSubmit}>Search</button>
                     <button type="button" className={"btn btn-secondary"} onClick={createPlaylist}>Create Playlist</button>
                     <button type="button" className={"btn btn-secondary"} onClick={logout}>Logout</button>
+                    </div>
+                    <div className="song-grid">
+                        {similarSongs.length > 0 &&
+                            similarSongs.map(song => (
+                                <div className="song" key={song.id}>
+                                    <img src={song.album.images[0].url} alt={`${song.name} album cover`} />
+                                    <div className="song-info">
+                                        <h5>{song.name}</h5>
+                                        <p>{song.artists[0].name}</p>
+                                    </div>
+                                    <a href={song.uri} className="song-link">
+                                        Play on Spotify
+                                    </a>
+                                </div>
+                            ))}
                     </div>
                 </div>
             ) : (
