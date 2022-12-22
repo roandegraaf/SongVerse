@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css'
-import {ThemeProvider} from "./hooks/useThemeContext";
-import ThemeSwitch from "./components/ThemeSwitch";
-import "./scss/bootstrap.scss";
+import './App.css';
+import './App.scss';
+
 
 const App = () => {
     const [similarSongs, setSimilarSongs] = useState([]);
@@ -84,6 +83,24 @@ const App = () => {
         window.localStorage.removeItem("token")
     }
 
+
+        const [ darkMode, setDarkMode ] = React.useState(false)
+
+        React.useEffect(() => {
+            const body = document.body
+            const toggle = document.querySelector('.toggle-inner')
+
+            // If dark mode is enabled - adds classes to update dark-mode styling.
+            // Else, removes and styling is as normal.
+            if( darkMode === true ) {
+                body.classList.add('dark-mode')
+                toggle.classList.add('toggle-active')
+            } else {
+                body.classList.remove('dark-mode')
+                toggle.classList.remove('toggle-active')
+            }
+        }, [darkMode])
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -114,15 +131,16 @@ const App = () => {
     return (
 
         <div>
-            <div className={"darkmode"}>
-                <ThemeProvider>
-                    <ThemeSwitch/>
-                </ThemeProvider>
-            </div>
             <header className="App-header">
                 <h1>SongVerse</h1>
                 <br/>
             </header>
+            <div
+                id="toggle"
+                onClick={() => darkMode === false ? setDarkMode(true) : setDarkMode(false)}
+            >
+                <div className="toggle-inner"/>
+            </div>
             {token ? (
                 <div className={"main-page"}>
                     <label htmlFor="song-link" className={"song-link-label"}>
