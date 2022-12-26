@@ -12,11 +12,29 @@
 }
 
 .App-header {
+  margin-top: 50px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
+}
+
+.App-header img {
+  max-width: 500px;
+  height: auto;
+}
+
+@media (max-width: 700px) {
+  .App-header img {
+    margin-top: 30px;
+    max-width: 75%;
+    height: auto;
+  }
+}
+
+.dark .App-header img {
+  filter: invert(1);
 }
 
 .login-page {
@@ -136,6 +154,23 @@
   background: #191414;
 }
 
+.slidedown label {
+  margin-top: 20px;
+  position: relative;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  align-items: center;
+  text-align: center;
+  display: block;
+}
+
+.slidedown input {
+  width: 200px;
+  cursor: pointer;
+  align-items: center;
+  display: block;
+}
+
 .main-page .btn {
   margin: 10px;
 }
@@ -169,6 +204,11 @@
   margin-bottom: 50px;
 }
 
+.main-page a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .song img {
   width: 200px;
   height: 200px;
@@ -184,9 +224,13 @@
   position: absolute;
   bottom: 25px;
   margin-top: 10px;
-  color: #1db954;
+  color: #1db954 !important;
   text-decoration: none;
   font-size: 18px;
+}
+
+.song:hover .song-link {
+  text-decoration: underline;
 }
 
 .song-link svg {
