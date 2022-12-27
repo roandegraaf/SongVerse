@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import header_logo from './logo/header_big.png'
 
+
 const App = () => {
     const [similarSongs, setSimilarSongs] = useState([]);
     const [songLink, setSongLink] = useState('');
@@ -227,7 +228,7 @@ const App = () => {
             <label htmlFor="song-link" className={"song-link-label"}>
                 Paste a Spotify song link:
             </label>
-            <form>
+            <form className={"textbox"}>
                 <input
                     id="song-link"
                     type="text"
@@ -247,31 +248,31 @@ const App = () => {
                 <button id="create-playlist" type="button" className={"btn btn-secondary"}
                         onClick={createPlaylist} disabled={isDisabled}>Create Playlist
                 </button>
-                <button type="button" className={"btn btn-secondary"} onClick={logout}>Logout</button>
+                {/*<button type="button" className={"btn btn-secondary"} onClick={logout}>Logout</button>*/}
             </div>
             <div className="slidedown">
                 {sliderIsEnabled && (<div className="slidedown-content">
                     <div className="SlideDownMenu-content">
-                        <label>
-                            <input type="checkbox" checked={isEnergyEnabled} onChange={handleEnergyCheckboxChange} />
-                            Energy:
-                            <input type="range" min="0" max="100" step="0.01" value={energy * 100} onChange={handleEnergyChange} disabled={!isEnergyEnabled} />
-                        </label>
-                        <label>
-                            <input type="checkbox" checked={isLoudnessEnabled} onChange={handleLoudnessCheckboxChange} />
-                            Loudness:
-                            <input type="range" min="0" max="100" step="0.01" value={loudness * 100} onChange={handleLoudnessChange} disabled={!isLoudnessEnabled} />
-                        </label>
-                        <label>
-                            <input type="checkbox" checked={isDanceabilityEnabled} onChange={handleDanceabilityCheckboxChange} />
-                            Danceability:
-                            <input type="range" min="0" max="100" step="0.01" value={danceability * 100} onChange={handleDanceabilityChange} disabled={!isDanceabilityEnabled} />
-                        </label>
-                        <label>
-                            <input type="checkbox" checked={isValenceEnabled} onChange={handleValenceCheckboxChange} />
-                            Happiness:
-                            <input type="range" min="0" max="100" step="0.01" value={valence * 100} onChange={handleValenceChange} disabled={!isValenceEnabled} />
-                        </label>
+                        <div className="menu-item">
+                            <input type="checkbox" checked={isEnergyEnabled} onChange={handleEnergyCheckboxChange}/>
+                            <label>Energy:</label>
+                            <input type="range" min="0" max="100" step="0.01" value={energy * 100} onChange={handleEnergyChange} disabled={!isEnergyEnabled}/>
+                        </div>
+                        <div className="menu-item">
+                            <input type="checkbox" checked={isLoudnessEnabled} onChange={handleLoudnessCheckboxChange}/>
+                            <label>Loudness:</label>
+                            <input type="range" min="0" max="100" step="0.01" value={loudness * 100} onChange={handleLoudnessChange} disabled={!isLoudnessEnabled}/>
+                        </div>
+                        <div className="menu-item">
+                            <input type="checkbox" checked={isDanceabilityEnabled} onChange={handleDanceabilityCheckboxChange}/>
+                            <label>Danceability:</label>
+                            <input type="range" min="0" max="100" step="0.01" value={danceability * 100} onChange={handleDanceabilityChange} disabled={!isDanceabilityEnabled}/>
+                        </div>
+                        <div className="menu-item">
+                            <input type="checkbox" checked={isValenceEnabled} onChange={handleValenceCheckboxChange}/>
+                            <label>Happiness:</label>
+                            <input type="range" min="0" max="100" step="0.01" value={valence * 100} onChange={handleValenceChange} disabled={!isValenceEnabled}/>
+                        </div>
                     </div>
                 </div>)}
             </div>
