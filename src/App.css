@@ -191,6 +191,7 @@
 @media (max-width: 700px) {
   .SlideDownMenu-content {
     display: block;
+    margin: 0 auto;
   }
 
   .SlideDownMenu-content input {
@@ -202,8 +203,14 @@
     margin: 0 auto;
   }
 
+  .SlideDownMenu-content .menu-item input[type="checkbox"] {
+    display: block;
+    margin: 0 auto;
+  }
+
   .SlideDownMenu-content .menu-item div {
     text-align: center;
+    margin: 0 auto;
   }
 }
 
