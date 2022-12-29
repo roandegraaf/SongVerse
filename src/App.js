@@ -9,9 +9,11 @@ const App = () => {
     const [similarSongs, setSimilarSongs] = useState([]);
     const [songLink, setSongLink] = useState('');
     const [playlistId, setPlaylistId] = useState(null);
+    const [songName, setSongName] = useState('');
+    const [songArtist, setSongArtist] = useState('');
 
-    //const REDIRECT_URI = "https://songverse.app"
-    const REDIRECT_URI = "http://localhost:3000"
+    const REDIRECT_URI = "https://songverse.app"
+    //const REDIRECT_URI = "http://localhost:3000"
     const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
@@ -133,7 +135,7 @@ const App = () => {
             method: 'POST', headers: {
                 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`
             }, body: JSON.stringify({
-                name: 'SongVerse Playlist', description: 'A playlist created with SongVerse', public: true
+                name: `SongVerse based on ${songName} by ${songArtist}`, description: 'A playlist created with SongVerse.app', public: true
             })
         });
         const data = await response.json();
@@ -174,11 +176,27 @@ const App = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!songLink) {
+            handleCurrentlyPlaying();
+            return;
+        }
+
         try {
             const songExtract = songLink.split('/').pop();
             const songId = songExtract.split('?')[0];
             const urlWithOptions = `https://api.spotify.com/v1/recommendations?limit=50&market=NL&seed_tracks=${songId}&target_popularity=0&${getQueryParams()}`;
             const url = `https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=0`
+
+            const songResponse = await fetch(`https://api.spotify.com/v1/tracks/${songId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const songData = await songResponse.json();
+            const currentSongName = songData.name;
+            const currentSongArtist = songData.artists[0].name
 
             if (sliderIsEnabled) {
                 const response = await axios.get(urlWithOptions, {
@@ -186,19 +204,18 @@ const App = () => {
                         'Authorization': `Bearer ${token}`,
                     }
                 });
-
-                console.log(response)
                 setSimilarSongs(response.data.tracks);
             }
+
             else {
                 const response = await axios.get(url, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     }
                 });
-
-                console.log(response)
                 setSimilarSongs(response.data.tracks);
+                setSongName(currentSongName);
+                setSongArtist(currentSongArtist);
             }
             setIsDisabled(false);
         } catch (error) {
@@ -206,6 +223,47 @@ const App = () => {
             logout();
         }
     };
+
+    async function handleCurrentlyPlaying() {
+        try {
+            // make the fetch call and update the currentlyPlayingSong state variable
+            const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+            const currentlyPlayingSongUrl = data.item.external_urls.spotify;
+            const currentSongName = data.item.name;
+            const currentSongArtist = data.item.artists[0].name
+
+            const songId = currentlyPlayingSongUrl.split('/').pop();
+            const urlWithOptions = `https://api.spotify.com/v1/recommendations?limit=50&market=NL&seed_tracks=${songId}&target_popularity=0&${getQueryParams()}`;
+            const url = `https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=0`;
+
+            if (sliderIsEnabled) {
+                const response = await axios.get(urlWithOptions, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+                setSimilarSongs(response.data.tracks);
+            } else {
+                const response = await axios.get(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+                setSimilarSongs(response.data.tracks);
+            }
+            setSongName(currentSongName);
+            setSongArtist(currentSongArtist);
+            setIsDisabled(false);
+        } catch (error) {
+            console.error(error);
+            logout();
+        }
+    }
 
     return (<body className={`App ${theme}`}>
     <div>
@@ -226,7 +284,7 @@ const App = () => {
         </label>
         {token ? (<div className={"main-page"}>
             <label htmlFor="song-link" className={"song-link-label"}>
-                Paste a Spotify song link:
+                Paste a Spotify song link or leave empty to search for currently playing song:
             </label>
             <form className={"textbox"}>
                 <input
