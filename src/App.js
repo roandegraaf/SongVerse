@@ -12,8 +12,8 @@ const App = () => {
     const [songName, setSongName] = useState('');
     const [songArtist, setSongArtist] = useState('');
 
-    const REDIRECT_URI = "https://songverse.app"
-    //const REDIRECT_URI = "http://localhost:3000"
+    //const REDIRECT_URI = "https://songverse.app"
+    const REDIRECT_URI = "http://localhost:3000"
     const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
@@ -28,11 +28,15 @@ const App = () => {
     const [energy, setEnergy] = useState(0.5);
     const [loudness, setLoudness] = useState(0.5);
     const [valence, setValence] = useState(0.5);
+    const [popularity, setPopularity] = useState('');
     const [isEnergyEnabled, setIsEnergyEnabled] = useState(false);
     const [isLoudnessEnabled, setIsLoudnessEnabled] = useState(false);
     const [isDanceabilityEnabled, setIsDanceabilityEnabled] = useState(false);
     const [isValenceEnabled, setIsValenceEnabled] = useState(false);
+    const [isPopularityEnabled, setIsPopularityEnabled] = useState(false)
     const [sliderIsEnabled, setSliderIsEnabled] = useState(false);
+    const [secretSliderIsEnabled, setSecretSliderIsEnabled] = useState(false);
+    const [buttonClickCount, setButtonClickCount] = useState(0);
 
     const getQueryParams = () => {
         const params = [];
@@ -51,6 +55,10 @@ const App = () => {
 
         if (isValenceEnabled) {
             params.push(`target_valence=${valence}`);
+        }
+
+        if (isPopularityEnabled) {
+            params.push(`target_popularity=${popularity}`)
         }
 
         return params.join('&');
@@ -81,6 +89,10 @@ const App = () => {
         setValence(event.target.value / 100);
     }
 
+    const handlePopularityChange = (event) => {
+        setPopularity(event.target.value);
+    }
+
     const handleDanceabilityCheckboxChange = () => {
         setIsDanceabilityEnabled(!isDanceabilityEnabled);
     }
@@ -97,8 +109,20 @@ const App = () => {
         setIsValenceEnabled(!isValenceEnabled);
     }
 
+    const handlePopularityCheckboxChange = () => {
+        setIsPopularityEnabled(!isPopularityEnabled);
+    }
+
+
     const handleClick = () => {
         setSliderIsEnabled(!sliderIsEnabled);
+        setButtonClickCount(buttonClickCount + 1);
+
+        if (buttonClickCount === 4) {
+            setSecretSliderIsEnabled(!secretSliderIsEnabled);
+        } else if (buttonClickCount > 4) {
+            setSecretSliderIsEnabled(!secretSliderIsEnabled);
+        }
     };
 
     useEffect(() => {
@@ -185,7 +209,7 @@ const App = () => {
         try {
             const songExtract = songLink.split('/').pop();
             const songId = songExtract.split('?')[0];
-            const urlWithOptions = `https://api.spotify.com/v1/recommendations?limit=50&market=NL&seed_tracks=${songId}&target_popularity=0&${getQueryParams()}`;
+            const urlWithOptions = `https://api.spotify.com/v1/recommendations?limit=50&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
             const url = `https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=0`
 
             const songResponse = await fetch(`https://api.spotify.com/v1/tracks/${songId}`, {
@@ -195,10 +219,11 @@ const App = () => {
             });
 
             const songData = await songResponse.json();
+            console.log(songData);
             const currentSongName = songData.name;
             const currentSongArtist = songData.artists[0].name
 
-            if (sliderIsEnabled) {
+            if (sliderIsEnabled || secretSliderIsEnabled) {
                 const response = await axios.get(urlWithOptions, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -214,9 +239,9 @@ const App = () => {
                     }
                 });
                 setSimilarSongs(response.data.tracks);
-                setSongName(currentSongName);
-                setSongArtist(currentSongArtist);
             }
+            setSongName(currentSongName);
+            setSongArtist(currentSongArtist);
             setIsDisabled(false);
         } catch (error) {
             console.error(error);
@@ -241,12 +266,13 @@ const App = () => {
             const urlWithOptions = `https://api.spotify.com/v1/recommendations?limit=50&market=NL&seed_tracks=${songId}&target_popularity=0&${getQueryParams()}`;
             const url = `https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=0`;
 
-            if (sliderIsEnabled) {
+            if (sliderIsEnabled || secretSliderIsEnabled) {
                 const response = await axios.get(urlWithOptions, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     }
                 });
+                console.log(urlWithOptions);
                 setSimilarSongs(response.data.tracks);
             } else {
                 const response = await axios.get(url, {
@@ -330,6 +356,15 @@ const App = () => {
                             <input type="checkbox" checked={isValenceEnabled} onChange={handleValenceCheckboxChange}/>
                             <label>Happiness:</label>
                             <input type="range" min="0" max="100" step="0.01" value={valence * 100} onChange={handleValenceChange} disabled={!isValenceEnabled}/>
+                        </div>
+                    </div>
+                </div>)}
+                {secretSliderIsEnabled && (<div className="secret-slidedown-content">
+                    <div className="SlideDownMenu-content">
+                        <div className="menu-item">
+                            <input type="checkbox" checked={isPopularityEnabled} onChange={handlePopularityCheckboxChange}/>
+                            <label>Popularity:</label>
+                            <input type="range" min="0" max="100" step="1" value={popularity} onChange={handlePopularityChange} disabled={!isPopularityEnabled}/>
                         </div>
                     </div>
                 </div>)}
