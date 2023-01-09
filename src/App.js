@@ -12,8 +12,8 @@ const App = () => {
     const [songName, setSongName] = useState('');
     const [songArtist, setSongArtist] = useState('');
 
-    //const REDIRECT_URI = "https://songverse.app"
-    const REDIRECT_URI = "http://localhost:3000"
+    const REDIRECT_URI = "https://songverse.app"
+    //const REDIRECT_URI = "http://localhost:3000"
     const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
@@ -263,7 +263,7 @@ const App = () => {
             const currentSongArtist = data.item.artists[0].name
 
             const songId = currentlyPlayingSongUrl.split('/').pop();
-            const urlWithOptions = `https://api.spotify.com/v1/recommendations?limit=50&market=NL&seed_tracks=${songId}&target_popularity=0&${getQueryParams()}`;
+            const urlWithOptions = `https://api.spotify.com/v1/recommendations?limit=50&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
             const url = `https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=0`;
 
             if (sliderIsEnabled || secretSliderIsEnabled) {
@@ -372,7 +372,7 @@ const App = () => {
             <div className="song-grid">
                 {similarSongs.length > 0 && similarSongs.map(song => (<a href={song.uri}>
                     <div className="song" key={song.id}>
-                        <img src={song.album.images[0].url} alt={`${song.name} album cover`}/>
+                        <img src={song.album?.images?.[0]?.url} alt={`${song.name} album cover`}/>
                         <div className="song-info">
                             <h5>{song.name}</h5>
                             <p>{song.artists[0].name}</p>
