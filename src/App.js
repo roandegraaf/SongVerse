@@ -12,8 +12,8 @@ const App = () => {
     const [songName, setSongName] = useState('');
     const [songArtist, setSongArtist] = useState('');
 
-    const REDIRECT_URI = "https://songverse.app"
-    //const REDIRECT_URI = "http://localhost:3000"
+    //const REDIRECT_URI = "https://songverse.app"
+    const REDIRECT_URI = "http://localhost:3000"
     const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
@@ -21,7 +21,9 @@ const App = () => {
 
     const [token, setToken] = useState("")
     const [notification, setNotification] = useState('');
+    const [errorNotification, setErrorNotification] = useState('');
     const [showNotification, setShowNotification] = useState(false);
+    const [showErrorNotification, setShowErrorNotification] = useState('');
     const [isDisabled, setIsDisabled] = useState(true);
 
     const [danceability, setDanceability] = useState(0.5);
@@ -40,27 +42,21 @@ const App = () => {
 
     const getQueryParams = () => {
         const params = [];
-
         if (isEnergyEnabled) {
             params.push(`target_energy=${energy}`);
         }
-
         if (isLoudnessEnabled) {
             params.push(`target_loudness=${loudness}`);
         }
-
         if (isDanceabilityEnabled) {
             params.push(`target_danceability=${danceability}`);
         }
-
         if (isValenceEnabled) {
             params.push(`target_valence=${valence}`);
         }
-
         if (isPopularityEnabled) {
             params.push(`target_popularity=${popularity}`)
         }
-
         return params.join('&');
     };
 
@@ -159,7 +155,9 @@ const App = () => {
             method: 'POST', headers: {
                 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`
             }, body: JSON.stringify({
-                name: `SongVerse based on ${songName} by ${songArtist}`, description: 'A playlist created with SongVerse.app', public: true
+                name: `SongVerse based on ${songName} by ${songArtist}`,
+                description: 'A playlist created with SongVerse.app',
+                public: true
             })
         });
         const data = await response.json();
@@ -217,7 +215,12 @@ const App = () => {
                     'Authorization': `Bearer ${token}`
                 }
             });
-
+            if (songResponse.status === 400) {
+                throw new Error('400');
+            }
+            if (songResponse.status === 401) {
+                throw new Error('401');
+            }
             const songData = await songResponse.json();
             console.log(songData);
             const currentSongName = songData.name;
@@ -230,9 +233,7 @@ const App = () => {
                     }
                 });
                 setSimilarSongs(response.data.tracks);
-            }
-
-            else {
+            } else {
                 const response = await axios.get(url, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -244,19 +245,55 @@ const App = () => {
             setSongArtist(currentSongArtist);
             setIsDisabled(false);
         } catch (error) {
-            console.error(error);
-            logout();
+            if (error.response && error.response.status === 401) {
+                console.log('Invalid token, please login again');
+                setErrorNotification(`Invalid token, please login again`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                    logout()
+                }, 1500);
+            }
+            if (error.message === '400') {
+                console.log('Invalid URL. Please use a Spotify song URL');
+                setErrorNotification(`Invalid URL. Please use a Spotify song URL`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
+            }
+            if (error.message === '401') {
+                console.log('Invalid token, please login again');
+                setErrorNotification(`Invalid token, please login again`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                    logout()
+                }, 1500);
+            } else {
+                console.error(error);
+                setErrorNotification(`${error}`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
+            }
         }
     };
 
     async function handleCurrentlyPlaying() {
         try {
-            // make the fetch call and update the currentlyPlayingSong state variable
             const response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
+            if (response.status === 401) {
+                throw new Error('401');
+            }
+            if (response.status === 204) {
+                throw new Error('204')
+            }
             const data = await response.json();
             const currentlyPlayingSongUrl = data.item.external_urls.spotify;
             const currentSongName = data.item.name;
@@ -286,8 +323,31 @@ const App = () => {
             setSongArtist(currentSongArtist);
             setIsDisabled(false);
         } catch (error) {
-            console.error(error);
-            logout();
+            if (error.message === '401') {
+                console.log('Invalid token, please login again');
+                setErrorNotification(`Invalid token, please login again`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                    logout()
+                }, 1500);
+            }
+            if (error.message === '204') {
+                console.log('No song is currently playing');
+                setErrorNotification(`No song is currently playing`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+
+                }, 1500);
+            } else {
+                console.error(error);
+                setErrorNotification(`Dikke error: ${error}`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
+            }
         }
     }
 
@@ -326,6 +386,11 @@ const App = () => {
                         {notification}
                     </div>
                 </div>
+                <div className="error-notification-container">
+                    <div className={`error-notification ${showErrorNotification ? 'show' : ''}`}>
+                        {errorNotification}
+                    </div>
+                </div>
                 <button type="button" className={"btn btn-primary"} onClick={handleSubmit}>Search</button>
                 <button id={"options-button"} className={"btn btn-secondary"} onClick={handleClick}>Options
                 </button>
@@ -340,31 +405,38 @@ const App = () => {
                         <div className="menu-item">
                             <input type="checkbox" checked={isEnergyEnabled} onChange={handleEnergyCheckboxChange}/>
                             <label>Energy:</label>
-                            <input type="range" min="0" max="100" step="0.01" value={energy * 100} onChange={handleEnergyChange} disabled={!isEnergyEnabled}/>
+                            <input type="range" min="0" max="100" step="0.01" value={energy * 100}
+                                   onChange={handleEnergyChange} disabled={!isEnergyEnabled}/>
                         </div>
                         <div className="menu-item">
                             <input type="checkbox" checked={isLoudnessEnabled} onChange={handleLoudnessCheckboxChange}/>
                             <label>Loudness:</label>
-                            <input type="range" min="0" max="100" step="0.01" value={loudness * 100} onChange={handleLoudnessChange} disabled={!isLoudnessEnabled}/>
+                            <input type="range" min="0" max="100" step="0.01" value={loudness * 100}
+                                   onChange={handleLoudnessChange} disabled={!isLoudnessEnabled}/>
                         </div>
                         <div className="menu-item">
-                            <input type="checkbox" checked={isDanceabilityEnabled} onChange={handleDanceabilityCheckboxChange}/>
+                            <input type="checkbox" checked={isDanceabilityEnabled}
+                                   onChange={handleDanceabilityCheckboxChange}/>
                             <label>Danceability:</label>
-                            <input type="range" min="0" max="100" step="0.01" value={danceability * 100} onChange={handleDanceabilityChange} disabled={!isDanceabilityEnabled}/>
+                            <input type="range" min="0" max="100" step="0.01" value={danceability * 100}
+                                   onChange={handleDanceabilityChange} disabled={!isDanceabilityEnabled}/>
                         </div>
                         <div className="menu-item">
                             <input type="checkbox" checked={isValenceEnabled} onChange={handleValenceCheckboxChange}/>
                             <label>Happiness:</label>
-                            <input type="range" min="0" max="100" step="0.01" value={valence * 100} onChange={handleValenceChange} disabled={!isValenceEnabled}/>
+                            <input type="range" min="0" max="100" step="0.01" value={valence * 100}
+                                   onChange={handleValenceChange} disabled={!isValenceEnabled}/>
                         </div>
                     </div>
                 </div>)}
                 {secretSliderIsEnabled && (<div className="secret-slidedown-content">
                     <div className="SlideDownMenu-content">
                         <div className="menu-item">
-                            <input type="checkbox" checked={isPopularityEnabled} onChange={handlePopularityCheckboxChange}/>
+                            <input type="checkbox" checked={isPopularityEnabled}
+                                   onChange={handlePopularityCheckboxChange}/>
                             <label>Popularity:</label>
-                            <input type="range" min="0" max="100" step="1" value={popularity} onChange={handlePopularityChange} disabled={!isPopularityEnabled}/>
+                            <input type="range" min="0" max="100" step="1" value={popularity}
+                                   onChange={handlePopularityChange} disabled={!isPopularityEnabled}/>
                         </div>
                     </div>
                 </div>)}
@@ -420,4 +492,3 @@ const App = () => {
 };
 
 export default App;
-
