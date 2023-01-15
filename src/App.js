@@ -12,8 +12,8 @@ const App = () => {
     const [songName, setSongName] = useState('');
     const [songArtist, setSongArtist] = useState('');
 
-    //const REDIRECT_URI = "https://songverse.app"
-    const REDIRECT_URI = "http://localhost:3000"
+    const REDIRECT_URI = "https://songverse.app"
+    //const REDIRECT_URI = "http://localhost:3000"
     const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
@@ -342,7 +342,7 @@ const App = () => {
                 }, 1500);
             } else {
                 console.error(error);
-                setErrorNotification(`Dikke error: ${error}`);
+                setErrorNotification(`${error}`);
                 setShowErrorNotification(true);
                 setTimeout(() => {
                     setShowErrorNotification(false);
