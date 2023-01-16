@@ -30,12 +30,12 @@ const App = () => {
     const [energy, setEnergy] = useState(0.5);
     const [loudness, setLoudness] = useState(0.5);
     const [valence, setValence] = useState(0.5);
-    const [popularity, setPopularity] = useState('');
+    const [popularity, setPopularity] = useState(25);
     const [isEnergyEnabled, setIsEnergyEnabled] = useState(false);
     const [isLoudnessEnabled, setIsLoudnessEnabled] = useState(false);
     const [isDanceabilityEnabled, setIsDanceabilityEnabled] = useState(false);
     const [isValenceEnabled, setIsValenceEnabled] = useState(false);
-    const [isPopularityEnabled, setIsPopularityEnabled] = useState(false)
+    const [isPopularityEnabled, setIsPopularityEnabled] = useState(true)
     const [sliderIsEnabled, setSliderIsEnabled] = useState(false);
     const [secretSliderIsEnabled, setSecretSliderIsEnabled] = useState(false);
     const [buttonClickCount, setButtonClickCount] = useState(0);
@@ -208,7 +208,7 @@ const App = () => {
             const songExtract = songLink.split('/').pop();
             const songId = songExtract.split('?')[0];
             const urlWithOptions = `https://api.spotify.com/v1/recommendations?limit=50&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
-            const url = `https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=0`
+            const url = `https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=20`
 
             const songResponse = await fetch(`https://api.spotify.com/v1/tracks/${songId}`, {
                 headers: {
@@ -301,7 +301,7 @@ const App = () => {
 
             const songId = currentlyPlayingSongUrl.split('/').pop();
             const urlWithOptions = `https://api.spotify.com/v1/recommendations?limit=50&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
-            const url = `https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=0`;
+            const url = `https://api.spotify.com/v1/recommendations?limit=50&seed_tracks=${songId}&target_popularity=20`;
 
             if (sliderIsEnabled || secretSliderIsEnabled) {
                 const response = await axios.get(urlWithOptions, {
