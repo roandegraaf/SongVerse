@@ -156,7 +156,7 @@ const App = () => {
                 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`
             }, body: JSON.stringify({
                 name: `SongVerse based on ${songName} by ${songArtist}`,
-                description: 'A playlist created with SongVerse.app',
+                description: `A playlist created with SongVerse.app`,
                 public: true
             })
         });
