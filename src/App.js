@@ -253,16 +253,14 @@ const App = () => {
                     setShowErrorNotification(false);
                     logout()
                 }, 1500);
-            }
-            if (error.message === '400') {
+            } else if (error.message === '400') {
                 console.log('Invalid URL. Please use a Spotify song URL');
                 setErrorNotification(`Invalid URL. Please use a Spotify song URL`);
                 setShowErrorNotification(true);
                 setTimeout(() => {
                     setShowErrorNotification(false);
                 }, 1500);
-            }
-            if (error.message === '401') {
+            } else if (error.message === '401') {
                 console.log('Invalid token, please login again');
                 setErrorNotification(`Invalid token, please login again`);
                 setShowErrorNotification(true);
@@ -323,7 +321,7 @@ const App = () => {
             setSongArtist(currentSongArtist);
             setIsDisabled(false);
         } catch (error) {
-            if (error.message === '401') {
+            if (error.response && error.response.status === 401) {
                 console.log('Invalid token, please login again');
                 setErrorNotification(`Invalid token, please login again`);
                 setShowErrorNotification(true);
@@ -331,15 +329,28 @@ const App = () => {
                     setShowErrorNotification(false);
                     logout()
                 }, 1500);
-            }
-            if (error.message === '204') {
-                console.log('No song is currently playing');
-                setErrorNotification(`No song is currently playing`);
+            } else if (error.message === '400') {
+                console.log('Invalid URL. Please use a Spotify song URL');
+                setErrorNotification(`Invalid URL. Please use a Spotify song URL`);
                 setShowErrorNotification(true);
                 setTimeout(() => {
                     setShowErrorNotification(false);
-
                 }, 1500);
+            } else if (error.message === '401') {
+                console.log('Invalid token, please login again');
+                setErrorNotification(`Invalid token, please login again`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                    logout()
+                }, 1500);
+            } else if (error.message === '204') {
+                    console.log('No song is currently playing');
+                    setErrorNotification(`No song is currently playing`);
+                    setShowErrorNotification(true);
+                    setTimeout(() => {
+                        setShowErrorNotification(false);
+                    }, 1500);
             } else {
                 console.error(error);
                 setErrorNotification(`${error}`);
