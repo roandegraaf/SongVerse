@@ -27,6 +27,7 @@ const App = () => {
     const [showNotification, setShowNotification] = useState(false);
     const [showErrorNotification, setShowErrorNotification] = useState('');
     const [isDisabled, setIsDisabled] = useState(true);
+    const [submitClicked, setSubmitClicked] = useState(false);
 
     const [danceability, setDanceability] = useState(0.5);
     const [energy, setEnergy] = useState(0.5);
@@ -200,6 +201,7 @@ const App = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitClicked(true);
 
         if (!songLink) {
             handleCurrentlyPlaying();
@@ -454,6 +456,9 @@ const App = () => {
                     </div>
                 </div>)}
             </div>
+            {submitClicked && ( 
+                    <div className="currently-playing"><p>Currently searching for: {songName} by {songArtist}</p></div>
+                )}
             <div className="song-grid">
                 {similarSongs.length > 0 && similarSongs.map(song => (<a href={song.uri}>
                     <div className="song" key={song.id}>
