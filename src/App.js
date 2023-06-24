@@ -13,7 +13,7 @@ const App = () => {
 
     const REDIRECT_URI_PROD = "https://songverse.app";
     const REDIRECT_URI_LOCAL = "http://localhost:3000";
-    const isLocal = !process.env.PORT || process.env.PORT === '3000';
+    const isLocal = window.location.href.includes('localhost');
     const REDIRECT_URI = isLocal ? REDIRECT_URI_LOCAL : REDIRECT_URI_PROD;
 
     const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
