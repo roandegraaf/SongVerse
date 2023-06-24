@@ -4,7 +4,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import header_logo from './logo/header_big.png'
 
-
 const App = () => {
     const [similarSongs, setSimilarSongs] = useState([]);
     const [songLink, setSongLink] = useState('');
@@ -12,8 +11,11 @@ const App = () => {
     const [songName, setSongName] = useState('');
     const [songArtist, setSongArtist] = useState('');
 
-    const REDIRECT_URI = "https://songverse.app"
-    //const REDIRECT_URI = "http://localhost:3000"
+    const REDIRECT_URI_PROD = "https://songverse.app";
+    const REDIRECT_URI_LOCAL = "http://localhost:3000";
+    const isLocal = !process.env.PORT || process.env.PORT === '3000';
+    const REDIRECT_URI = isLocal ? REDIRECT_URI_LOCAL : REDIRECT_URI_PROD;
+
     const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
