@@ -21,7 +21,8 @@ const App = () => {
     const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
-    const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
+    const SCOPE = "user-read-currently-playing playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
+    // const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
     const API_BASEURL = "https://api.spotify.com/v1/"
 
     const [token, setToken] = useState("")
@@ -554,7 +555,7 @@ const App = () => {
                         </div>
                     </div>)}
                 </div>
-                {submitClicked && (
+                {similarSongs.length > 0 && (
                     <div className="currently-playing"><p>Currently searching for: {songName} by {songArtist}</p></div>
                 )}
                 <div className="song-grid">
