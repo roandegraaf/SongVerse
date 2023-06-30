@@ -11,18 +11,19 @@ const App = () => {
     const [songName, setSongName] = useState('');
     const [songArtist, setSongArtist] = useState('');
 
-    const [topSongs, setTopSongs] = useState({});
-
     const REDIRECT_URI_PROD = "https://songverse.app";
     const REDIRECT_URI_LOCAL = "http://localhost:3000";
     const isLocal = window.location.href.includes('localhost');
     const REDIRECT_URI = isLocal ? REDIRECT_URI_LOCAL : REDIRECT_URI_PROD;
 
-    const CLIENT_ID = "51a7443fa7e54e6dbba2eeb3baf569a9"
+    const CLIENT_ID_PROD = "51a7443fa7e54e6dbba2eeb3baf569a9"
+    const CLIENT_ID_LOCAL = "9c23cd09158247cd8bce87368fc52416"
+    const CLIENT_ID = isLocal ? CLIENT_ID_LOCAL : CLIENT_ID_PROD;
+
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
-    const SCOPE = "user-read-currently-playing playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
-    // const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
+    // const SCOPE = "user-read-currently-playing playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
+    const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
     const API_BASEURL = "https://api.spotify.com/v1/"
 
     const [token, setToken] = useState("")
@@ -158,24 +159,48 @@ const App = () => {
     }, [token]);
 
     async function createPlaylist() {
-        const response = await fetch(API_BASEURL + 'me/playlists', {
-            method: 'POST', headers: {
-                'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`
-            }, body: JSON.stringify({
-                name: `SongVerse based on ${songName} by ${songArtist}`,
-                description: `A playlist created with SongVerse.app`,
-                public: true
-            })
-        });
-        const data = await response.json();
-        setPlaylistId(data.id);
+        let playlistName;
+        if (songName && songArtist) {
+            playlistName = `SongVerse based on ${songName} by ${songArtist}`;
+        } else {
+            playlistName = 'SongVerse Playlist based on your Top Songs';
+        }
 
-        setIsDisabled(true);
-        setNotification('Playlist created!');
-        setShowNotification(true);
-        setTimeout(() => {
-            setShowNotification(false);
-        }, 1500);
+        try {
+            const response = await fetch(API_BASEURL + 'me/playlists', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    name: playlistName,
+                    description: 'A playlist created with SongVerse.app',
+                    public: true,
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setPlaylistId(data.id);
+
+                setIsDisabled(true);
+                setNotification('Playlist created!');
+                setShowNotification(true);
+                setTimeout(() => {
+                    setShowNotification(false);
+                }, 1500);
+            } else {
+                throw new Error('Playlist creation failed.');
+            }
+        } catch (error) {
+            console.error('Error creating playlist:', error);
+            setErrorNotification('Error creating playlist');
+            setShowErrorNotification(true);
+            setTimeout(() => {
+                setShowErrorNotification(false);
+            }, 1500);
+        }
     }
 
     useEffect(() => {
@@ -287,65 +312,66 @@ const App = () => {
         }
     };
 
+    const getRecommendations = async (songId) => {
+        try {
+            const urlWithOptions = `${API_BASEURL}recommendations?limit=5&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
+            const url = `${API_BASEURL}recommendations?limit=5&seed_tracks=${songId}&target_popularity=15`;
+
+            let response;
+            if (sliderIsEnabled || secretSliderIsEnabled) {
+                response = await axios.get(urlWithOptions, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+            } else {
+                response = await axios.get(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+            }
+
+            return response.data.tracks;
+        } catch (error) {
+            console.error('Error fetching recommendations:', error);
+            return [];
+        }
+    };
+
     const getTopSongs = async (e) => {
+        setSubmitClicked(false);
         try {
             const response = await fetch(API_BASEURL + 'me/top/tracks', {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    'Authorization': `Bearer ${token}`,
+                },
             });
-            console.log(response);
+
             if (response.status === 401) {
                 throw new Error('401');
             }
+
             if (response.status === 204) {
                 throw new Error('204');
             }
 
-            setTopSongs(response.data.items.id);
-            console.log("ID list top songs:" + topSongs);
+            const data = await response.json();
+            const items = data.items;
+            const itemIds = items.map((item) => item.id);
+            console.log(itemIds);
 
-            for (let i = 0; i < topSongs.length; i++) {
-                const songId = topSongs[i];
+            const recommendations = await Promise.all(itemIds.map(getRecommendations));
 
-                const urlWithOptions = API_BASEURL + `recommendations?limit=10&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
-                const url = API_BASEURL + `recommendations?limit=50&seed_tracks=${songId}&target_popularity=20`
+            const allRecommendations = recommendations.flat();
 
-                const songResponse = await fetch(API_BASEURL + `tracks/${songId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (songResponse.status === 400) {
-                    throw new Error('400');
-                }
-                if (songResponse.status === 401) {
-                    throw new Error('401');
-                }
-                const songData = await songResponse.json();
-                console.log(songData);
-                const currentSongName = songData.name;
-                const currentSongArtist = songData.artists[0].name
+            const uniqueRecommendations = Array.from(new Set(allRecommendations.map((track) => track.id))).map((id) =>
+                allRecommendations.find((track) => track.id === id)
+            );
 
-                if (sliderIsEnabled || secretSliderIsEnabled) {
-                    const response = await axios.get(urlWithOptions, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        }
-                    });
-                    setSimilarSongs(response.data.tracks);
-                } else {
-                    const response = await axios.get(url, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        }
-                    });
-                    setSimilarSongs(response.data.tracks);
-                }
-                setSongName(currentSongName);
-                setSongArtist(currentSongArtist);
-                setIsDisabled(false);
-            }
+            setSimilarSongs(uniqueRecommendations);
+            setIsDisabled(false);
+
         } catch (error) {
             if (error.response && error.response.status === 401) {
                 console.log('Invalid token, please login again');
@@ -357,7 +383,7 @@ const App = () => {
                 }, 1500);
             } else if (error.message === '400') {
                 console.log('Invalid URL. Please use a Spotify song URL');
-                setErrorNotification(`Invalid URL. Please use a Spotify song URL`);
+                setErrorNotification(`Something went wrong, please try again later`);
                 setShowErrorNotification(true);
                 setTimeout(() => {
                     setShowErrorNotification(false);
@@ -380,6 +406,7 @@ const App = () => {
             }
         }
     };
+
 
     async function handleCurrentlyPlaying() {
         try {
@@ -504,10 +531,10 @@ const App = () => {
                             {errorNotification}
                         </div>
                     </div>
-                    <button type="button" className={"btn btn-primary"} onClick={handleSubmit}>Search</button>
+                    <button type="button" className={"btn btn-primary"} onClick={handleSubmit} title="Search for song url or currently playing song">Search</button>
+                    <button className={'btn btn-secondary'} onClick={getTopSongs} title="Search for recommendations based on your top songs">Top Songs</button>
                     <button id={"options-button"} className={"btn btn-secondary"} onClick={handleClick}>Options
                     </button>
-                    <button className={'btn btn-secondary'} onClick={getTopSongs}>getTopSongs</button>
                     <button id="create-playlist" type="button" className={"btn btn-secondary"}
                         onClick={createPlaylist} disabled={isDisabled}>Create Playlist
                     </button>
@@ -555,9 +582,11 @@ const App = () => {
                         </div>
                     </div>)}
                 </div>
-                {similarSongs.length > 0 && (
-                    <div className="currently-playing"><p>Currently searching for: {songName} by {songArtist}</p></div>
-                )}
+                {similarSongs.length > 0 && submitClicked && songName && songArtist ? (
+                    <div className="currently-playing">
+                        <p>Currently searching for: {songName} by {songArtist}</p>
+                    </div>
+                ) : null}
                 <div className="song-grid">
                     {similarSongs.length > 0 && similarSongs.map(song => (<a href={song.uri}>
                         <div className="song" key={song.id}>
