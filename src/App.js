@@ -342,7 +342,7 @@ const App = () => {
     const getTopSongs = async (e) => {
         setSubmitClicked(false);
         try {
-            const response = await fetch(API_BASEURL + 'me/top/tracks', {
+            const response = await fetch(API_BASEURL + 'me/top/tracks?limit=10&offset=0&time_range=short_term', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
