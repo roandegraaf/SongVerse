@@ -315,7 +315,7 @@ const App = () => {
     const getRecommendations = async (songId) => {
         try {
             const urlWithOptions = `${API_BASEURL}recommendations?limit=5&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
-            const url = `${API_BASEURL}recommendations?limit=5&seed_tracks=${songId}&target_popularity=15`;
+            const url = `${API_BASEURL}recommendations?limit=5&seed_tracks=${songId}&target_popularity=20`;
 
             let response;
             if (sliderIsEnabled || secretSliderIsEnabled) {
