@@ -312,6 +312,24 @@ const App = () => {
         }
     };
 
+    function shuffle(array) {
+        let currentIndex = array.length,  randomIndex;
+      
+        // While there remain elements to shuffle.
+        while (currentIndex !== 0) {
+      
+          // Pick a remaining element.
+          randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex--;
+      
+          // And swap it with the current element.
+          [array[currentIndex], array[randomIndex]] = [
+            array[randomIndex], array[currentIndex]];
+        }
+      
+        return array;
+      }
+
     const getRecommendations = async (songId) => {
         try {
             const urlWithOptions = `${API_BASEURL}recommendations?limit=5&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
@@ -333,6 +351,7 @@ const App = () => {
             }
 
             return response.data.tracks;
+
         } catch (error) {
             console.error('Error fetching recommendations:', error);
             return [];
@@ -340,6 +359,7 @@ const App = () => {
     };
 
     const getTopSongs = async (e) => {
+        let shuffledRecomendations;
         setSubmitClicked(false);
         try {
             const response = await fetch(API_BASEURL + 'me/top/tracks?limit=20&offset=0&time_range=short_term', {
@@ -359,14 +379,17 @@ const App = () => {
             const data = await response.json();
             const items = data.items;
             const itemIds = items.map((item) => item.id);
-            console.log(itemIds);
 
             const recommendations = await Promise.all(itemIds.map(getRecommendations));
 
             const allRecommendations = recommendations.flat();
+            console.log(allRecommendations.json);
 
-            const uniqueRecommendations = Array.from(new Set(allRecommendations.map((track) => track.id))).map((id) =>
-                allRecommendations.find((track) => track.id === id)
+            shuffledRecomendations = shuffle(allRecommendations);
+            console.log(shuffledRecomendations.json);
+
+            const uniqueRecommendations = Array.from(new Set(shuffledRecomendations.map((track) => track.id))).map((id) =>
+            shuffledRecomendations.find((track) => track.id === id)
             );
 
             setSimilarSongs(uniqueRecommendations);
