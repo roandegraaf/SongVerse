@@ -208,8 +208,55 @@
     cursor: pointer;
 }
 
+.btn1 {
+    background-color: #70369d;
+    border-color: #70369d;
+}
 
+.btn1:hover {
+    background-color: #532875;
+    border-color: #532875;
+}
 
+.btn2 {
+    background-color: #487de7;
+    border-color: #487de7;
+}
+
+.btn2:hover {
+    background-color: #2b4d8f;
+    border-color: #2b4d8f;
+}
+
+.btn3 {
+    background-color: #79c314;
+    border-color: #79c314;
+}
+
+.btn3:hover {
+    background-color: #4f7e0c;
+    border-color: #4f7e0c;
+}
+
+.btn4 {
+    background-color: #ffa500;
+    border-color: #ffa500;
+}
+
+.btn4:hover {
+    background-color: #ae7101;
+    border-color: #ae7101;
+}
+
+.btn5 {
+    background-color: #e81416;
+    border-color: #e81416;
+}
+
+.btn5:hover {
+    background-color: #8e0c0e;
+    border-color: #8e0c0e;
+}
 
 @media (min-width: 700px) {
     .SlideDownMenu-content {

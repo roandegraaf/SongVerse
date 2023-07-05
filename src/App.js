@@ -20,10 +20,12 @@ const App = () => {
     const CLIENT_ID_LOCAL = "9c23cd09158247cd8bce87368fc52416"
     const CLIENT_ID = isLocal ? CLIENT_ID_LOCAL : CLIENT_ID_PROD;
 
+    const [expirationTime, setExpirationTime] = useState("");
+
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
-    // const SCOPE = "user-read-currently-playing playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
     const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
+    //const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative ugc-image-upload"
     const API_BASEURL = "https://api.spotify.com/v1/"
 
     const [token, setToken] = useState("")
@@ -33,6 +35,7 @@ const App = () => {
     const [showErrorNotification, setShowErrorNotification] = useState('');
     const [isDisabled, setIsDisabled] = useState(true);
     const [submitClicked, setSubmitClicked] = useState(false);
+    const [playlistImage, setPlaylistImage] = useState('');
 
     const [danceability, setDanceability] = useState(0.5);
     const [energy, setEnergy] = useState(0.5);
@@ -146,17 +149,42 @@ const App = () => {
     useEffect(() => {
         document.title = "SongVerse";
 
-        const hash = window.location.hash
-        let token = window.localStorage.getItem("token")
+        const hash = window.location.hash;
+        let token = window.localStorage.getItem("token");
+        let expirationTime = window.localStorage.getItem("expirationTime");
 
         if (!token && hash) {
-            token = hash.substring(1).split("&").find(elem => elem.startsWith("access_token")).split("=")[1]
+            token = hash.substring(1).split("&").find((elem) => elem.startsWith("access_token")).split("=")[1];
 
-            window.location.hash = ""
-            window.localStorage.setItem("token", token)
+            window.location.hash = "";
+            window.localStorage.setItem("token", token);
+
+            const currentTime = new Date().getTime();
+            const expiration = currentTime + 3600 * 1000; // 3600 seconds * 1000 milliseconds
+
+            window.localStorage.setItem("expirationTime", expiration);
         }
-        setToken(token)
-    }, [token]);
+
+        setToken(token);
+        setExpirationTime(expirationTime);
+    }, []);
+
+    useEffect(() => {
+        const checkTokenExpiration = () => {
+            const currentTime = new Date().getTime();
+            const expiration = parseInt(expirationTime);
+
+            if (currentTime > expiration) {
+                logout();
+                window.location.href = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`;
+            }
+        };
+
+        const timer = setInterval(checkTokenExpiration, 1000); // Check every second
+
+        return () => clearInterval(timer); // Clear the interval when the component is unmounted
+    }, [CLIENT_ID, REDIRECT_URI, expirationTime]);
+
 
     async function createPlaylist() {
         let playlistName;
@@ -183,7 +211,6 @@ const App = () => {
             if (response.ok) {
                 const data = await response.json();
                 setPlaylistId(data.id);
-
                 setIsDisabled(true);
                 setNotification('Playlist created!');
                 setShowNotification(true);
@@ -202,6 +229,75 @@ const App = () => {
             }, 1500);
         }
     }
+
+    // useEffect(() => {
+    //     generatePlaylistImage()
+    //     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // }, [playlistId]);
+
+    const generatePlaylistImage = async () => {
+        const albumCovers = similarSongs.slice(0, 4).map((song) => song.album.images[0].url);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 400;
+        const context = canvas.getContext('2d');
+
+        // Load album cover images
+        const images = await Promise.all(albumCovers.map((url) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = url;
+            });
+        }));
+
+        // Draw album cover images on the canvas
+        images.forEach((img, index) => {
+            const x = (index % 2) * 200;
+            const y = Math.floor(index / 2) * 200;
+            context.drawImage(img, x, y, 200, 200);
+        });
+
+        // Add logo on top
+        const logo = new Image();
+        logo.src = header_logo;
+        logo.onload = () => {
+            context.drawImage(logo, 10, 10, 200, 60);
+            const dataURL = canvas.toDataURL('image/jpeg');
+            setPlaylistImage(dataURL);
+            postPlaylistImage(); 
+        };
+    };
+
+    const postPlaylistImage = async () => {
+        if (!playlistId) {
+          return;
+        }
+      
+        const imageBase64 = playlistImage.replace(/^data:image\/jpeg;base64,/, '');
+        console.log(imageBase64);
+
+        try {
+          const response = await fetch(API_BASEURL + `playlists/${playlistId}/images`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'image/jpeg',
+            },
+            body: imageBase64,
+          });
+      
+          console.log('Playlist image posted successfully!');
+          console.log(response);
+        } catch (error) {
+          console.error('Error posting playlist image:', error);
+        }
+    };
+      
+
 
     useEffect(() => {
         addSongsToPlaylist()
@@ -224,8 +320,10 @@ const App = () => {
     };
 
     const logout = () => {
-        setToken("")
-        window.localStorage.removeItem("token")
+        setToken("");
+        setExpirationTime("");
+        window.localStorage.removeItem("token");
+        window.localStorage.removeItem("expirationTime");
     };
 
     const handleSubmit = async (e) => {
@@ -313,22 +411,22 @@ const App = () => {
     };
 
     function shuffle(array) {
-        let currentIndex = array.length,  randomIndex;
-      
+        let currentIndex = array.length, randomIndex;
+
         // While there remain elements to shuffle.
         while (currentIndex !== 0) {
-      
-          // Pick a remaining element.
-          randomIndex = Math.floor(Math.random() * currentIndex);
-          currentIndex--;
-      
-          // And swap it with the current element.
-          [array[currentIndex], array[randomIndex]] = [
-            array[randomIndex], array[currentIndex]];
+
+            // Pick a remaining element.
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+
+            // And swap it with the current element.
+            [array[currentIndex], array[randomIndex]] = [
+                array[randomIndex], array[currentIndex]];
         }
-      
+
         return array;
-      }
+    }
 
     const getRecommendations = async (songId) => {
         try {
@@ -389,7 +487,7 @@ const App = () => {
             console.log(shuffledRecomendations.json);
 
             const uniqueRecommendations = Array.from(new Set(shuffledRecomendations.map((track) => track.id))).map((id) =>
-            shuffledRecomendations.find((track) => track.id === id)
+                shuffledRecomendations.find((track) => track.id === id)
             );
 
             setSimilarSongs(uniqueRecommendations);
@@ -554,14 +652,14 @@ const App = () => {
                             {errorNotification}
                         </div>
                     </div>
-                    <button type="button" className={"btn btn-primary"} onClick={handleSubmit} title="Search for song url or currently playing song">Search</button>
-                    <button className={'btn btn-secondary'} onClick={getTopSongs} title="Search for recommendations based on your top songs">Top Songs</button>
-                    <button id={"options-button"} className={"btn btn-secondary"} onClick={handleClick}>Options
+                    <button type="button" className={"btn btn-primary btn1"} onClick={handleSubmit} title="Search for song url or currently playing song">Search</button>
+                    <button className={'btn btn-secondary btn2'} onClick={getTopSongs} title="Search for recommendations based on your top songs">Surprise Me</button>
+                    <button id={"options-button"} className={"btn btn-secondary btn3"} onClick={handleClick}>Options
                     </button>
-                    <button id="create-playlist" type="button" className={"btn btn-secondary"}
+                    <button id="create-playlist" type="button" className={"btn btn-secondary btn4"}
                         onClick={createPlaylist} disabled={isDisabled}>Create Playlist
                     </button>
-                    {/*<button type="button" className={"btn btn-secondary"} onClick={logout}>Logout</button>*/}
+                    <button type="button" className={"btn btn-secondary btn5"} onClick={logout}>Logout</button>
                 </div>
                 <div className="slidedown">
                     {sliderIsEnabled && (<div className="slidedown-content">
