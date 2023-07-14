@@ -3,6 +3,7 @@ import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import header_logo from './logo/header_big.png'
+import playlist_overlay from './logo/playlist_overlay.png'
 
 const App = () => {
     const [similarSongs, setSimilarSongs] = useState([]);
@@ -24,8 +25,8 @@ const App = () => {
 
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
-    const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
-    //const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative ugc-image-upload"
+    //const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
+    const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative ugc-image-upload"
     const API_BASEURL = "https://api.spotify.com/v1/"
 
     const [token, setToken] = useState("")
@@ -230,10 +231,10 @@ const App = () => {
         }
     }
 
-    // useEffect(() => {
-    //     generatePlaylistImage()
-    //     // eslint-disable-next-line react-hooks/exhaustive-deps
-    // }, [playlistId]);
+    useEffect(() => {
+        generatePlaylistImage()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [playlistId]);
 
     const generatePlaylistImage = async () => {
         const albumCovers = similarSongs.slice(0, 4).map((song) => song.album.images[0].url);
@@ -254,6 +255,15 @@ const App = () => {
             });
         }));
 
+        // Wait for all images to finish loading
+        await Promise.all(images.map((img) => new Promise((resolve) => {
+            if (img.complete) {
+                resolve();
+            } else {
+                img.onload = resolve;
+            }
+        })));
+
         // Draw album cover images on the canvas
         images.forEach((img, index) => {
             const x = (index % 2) * 200;
@@ -263,40 +273,50 @@ const App = () => {
 
         // Add logo on top
         const logo = new Image();
-        logo.src = header_logo;
-        logo.onload = () => {
-            context.drawImage(logo, 10, 10, 200, 60);
-            const dataURL = canvas.toDataURL('image/jpeg');
-            setPlaylistImage(dataURL);
-            postPlaylistImage(); 
-        };
+        logo.src = playlist_overlay;
+        await new Promise((resolve) => {
+            if (logo.complete) {
+                resolve();
+            } else {
+                logo.onload = resolve;
+            }
+        });
+        context.drawImage(logo, 0, 0, 400, 400);
+
+        const dataURL = canvas.toDataURL('image/jpeg');
+        setPlaylistImage(dataURL);
     };
+
+
+    useEffect(() => {
+        postPlaylistImage()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [playlistImage]);
 
     const postPlaylistImage = async () => {
         if (!playlistId) {
-          return;
+            return;
         }
-      
+
         const imageBase64 = playlistImage.replace(/^data:image\/jpeg;base64,/, '');
         console.log(imageBase64);
 
         try {
-          const response = await fetch(API_BASEURL + `playlists/${playlistId}/images`, {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'image/jpeg',
-            },
-            body: imageBase64,
-          });
-      
-          console.log('Playlist image posted successfully!');
-          console.log(response);
+            await fetch(API_BASEURL + `playlists/${playlistId}/images`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'image/jpeg',
+                },
+                body: imageBase64,
+            });
+
+            console.log('Playlist image posted successfully!');
         } catch (error) {
-          console.error('Error posting playlist image:', error);
+            console.error('Error posting playlist image:', error);
         }
     };
-      
+
 
 
     useEffect(() => {
