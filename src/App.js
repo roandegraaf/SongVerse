@@ -120,7 +120,6 @@ const App = () => {
         setIsPopularityEnabled(!isPopularityEnabled);
     }
 
-
     const handleClick = () => {
         setSliderIsEnabled(!sliderIsEnabled);
         setButtonClickCount(buttonClickCount + 1);
@@ -180,9 +179,10 @@ const App = () => {
             }
         };
 
-        const timer = setInterval(checkTokenExpiration, 1000); // Check every second
+        const timer = setInterval(checkTokenExpiration, 1000); 
 
-        return () => clearInterval(timer); // Clear the interval when the component is unmounted
+        return () => clearInterval(timer); 
+
     }, [CLIENT_ID, REDIRECT_URI, expirationTime]);
 
 
@@ -282,7 +282,6 @@ const App = () => {
         setPlaylistImage(dataURL);
     };
 
-
     useEffect(() => {
         postPlaylistImage()
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -311,8 +310,6 @@ const App = () => {
             console.error('Error posting playlist image:', error);
         }
     };
-
-
 
     useEffect(() => {
         addSongsToPlaylist()
@@ -428,18 +425,13 @@ const App = () => {
     function shuffle(array) {
         let currentIndex = array.length, randomIndex;
 
-        // While there remain elements to shuffle.
         while (currentIndex !== 0) {
-
-            // Pick a remaining element.
             randomIndex = Math.floor(Math.random() * currentIndex);
             currentIndex--;
 
-            // And swap it with the current element.
             [array[currentIndex], array[randomIndex]] = [
                 array[randomIndex], array[currentIndex]];
         }
-
         return array;
     }
 
@@ -462,9 +454,7 @@ const App = () => {
                     },
                 });
             }
-
             return response.data.tracks;
-
         } catch (error) {
             console.error('Error fetching recommendations:', error);
             return [];
