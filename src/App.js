@@ -25,7 +25,6 @@ const App = () => {
 
     const AUTH_ENDPOINT = "https://accounts.spotify.com/authorize"
     const RESPONSE_TYPE = "token"
-    //const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative"
     const SCOPE = "user-read-currently-playing user-top-read playlist-modify-private playlist-modify-public playlist-read-private playlist-read-collaborative ugc-image-upload"
     const API_BASEURL = "https://api.spotify.com/v1/"
 
@@ -240,11 +239,10 @@ const App = () => {
         const albumCovers = similarSongs.slice(0, 4).map((song) => song.album.images[0].url);
 
         const canvas = document.createElement('canvas');
-        canvas.width = 400;
-        canvas.height = 400;
+        canvas.width = 650;
+        canvas.height = 650;
         const context = canvas.getContext('2d');
 
-        // Load album cover images
         const images = await Promise.all(albumCovers.map((url) => {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -255,7 +253,6 @@ const App = () => {
             });
         }));
 
-        // Wait for all images to finish loading
         await Promise.all(images.map((img) => new Promise((resolve) => {
             if (img.complete) {
                 resolve();
@@ -264,14 +261,12 @@ const App = () => {
             }
         })));
 
-        // Draw album cover images on the canvas
         images.forEach((img, index) => {
-            const x = (index % 2) * 200;
-            const y = Math.floor(index / 2) * 200;
-            context.drawImage(img, x, y, 200, 200);
+            const x = (index % 2) * 325;
+            const y = Math.floor(index / 2) * 325;
+            context.drawImage(img, x, y, 325, 325);
         });
 
-        // Add logo on top
         const logo = new Image();
         logo.src = playlist_overlay;
         await new Promise((resolve) => {
@@ -281,7 +276,7 @@ const App = () => {
                 logo.onload = resolve;
             }
         });
-        context.drawImage(logo, 0, 0, 400, 400);
+        context.drawImage(logo, 0, 0, 650, 650);
 
         const dataURL = canvas.toDataURL('image/jpeg');
         setPlaylistImage(dataURL);
@@ -479,6 +474,8 @@ const App = () => {
     const getTopSongs = async (e) => {
         let shuffledRecomendations;
         setSubmitClicked(false);
+        setSongName("");
+        setSongArtist("");
         try {
             const response = await fetch(API_BASEURL + 'me/top/tracks?limit=20&offset=0&time_range=short_term', {
                 headers: {
