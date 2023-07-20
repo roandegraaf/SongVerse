@@ -212,11 +212,6 @@ const App = () => {
                 const data = await response.json();
                 setPlaylistId(data.id);
                 setIsDisabled(true);
-                setNotification('Playlist created!');
-                setShowNotification(true);
-                setTimeout(() => {
-                    setShowNotification(false);
-                }, 1500);
             } else {
                 throw new Error('Playlist creation failed.');
             }
@@ -306,8 +301,18 @@ const App = () => {
             });
 
             console.log('Playlist image posted successfully!');
+            setNotification('Playlist created!');
+                setShowNotification(true);
+                setTimeout(() => {
+                    setShowNotification(false);
+                }, 1500);
         } catch (error) {
             console.error('Error posting playlist image:', error);
+            setErrorNotification('Error creating playlist', error);
+            setShowErrorNotification(true);
+            setTimeout(() => {
+                setShowErrorNotification(false);
+            }, 1500);
         }
     };
 
