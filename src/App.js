@@ -322,19 +322,55 @@ const App = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [playlistId]);
 
+    const MAX_URIS_PER_REQUEST = 50;
+
     async function addSongsToPlaylist() {
         if (!playlistId || !token) {
             return;
         }
+
         const trackUris = similarSongs.map(r => r.uri);
-        await fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
-            method: 'POST', headers: {
-                'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`
-            }, body: JSON.stringify({
-                uris: trackUris
-            })
-        }, [])
-    };
+        const numUris = trackUris.length;
+
+        if (numUris <= MAX_URIS_PER_REQUEST) {
+            await fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    uris: trackUris
+                })
+            }, [])
+        } else {
+            const firstHalf = trackUris.slice(0, MAX_URIS_PER_REQUEST);
+            const secondHalf = trackUris.slice(MAX_URIS_PER_REQUEST);
+
+            await Promise.all([
+                fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        uris: firstHalf
+                    })
+                }),
+                fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        uris: secondHalf
+                    })
+                })
+            ])
+        }
+    }
 
     const logout = () => {
         setToken("");
@@ -359,7 +395,7 @@ const App = () => {
             const url = API_BASEURL + `recommendations?limit=50&seed_tracks=${songId}&target_popularity=20`
 
             if (songLink.includes("playlist")) {
-                let shuffledRecomendations;  
+                let shuffledRecomendations;
 
                 const response = await fetch(API_BASEURL + `playlists/${songId}/tracks?fields=items.track(id)&limit=25`, {
                     headers: {
@@ -441,385 +477,384 @@ const App = () => {
                 setSongArtist(currentSongArtist);
                 setIsDisabled(false);
             }
-            } catch (error) {
-                if (error.response && error.response.status === 401) {
-                    console.log('Invalid token, please login again');
-                    setErrorNotification(`Invalid token, please login again`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                        logout()
-                    }, 1500);
-                } else if (error.message === '400') {
-                    console.log('Invalid URL. Please use a Spotify song URL');
-                    setErrorNotification(`Invalid URL. Please use a Spotify song URL`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                    }, 1500);
-                } else if (error.message === '401') {
-                    console.log('Invalid token, please login again');
-                    setErrorNotification(`Invalid token, please login again`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                        logout()
-                    }, 1500);
-                } else if (error.message === '404') {
-                    console.log('Invalid URL');
-                    setErrorNotification(`Invalid URL`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                    }, 1500);
-                } else {
-                    console.error(error);
-                    setErrorNotification(`${error}`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                    }, 1500);
-                }
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                console.log('Invalid token, please login again');
+                setErrorNotification(`Invalid token, please login again`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                    logout()
+                }, 1500);
+            } else if (error.message === '400') {
+                console.log('Invalid URL. Please use a Spotify song URL');
+                setErrorNotification(`Invalid URL. Please use a Spotify song URL`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
+            } else if (error.message === '401') {
+                console.log('Invalid token, please login again');
+                setErrorNotification(`Invalid token, please login again`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                    logout()
+                }, 1500);
+            } else if (error.message === '404') {
+                console.log('Invalid URL');
+                setErrorNotification(`Invalid URL`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
+            } else {
+                console.error(error);
+                setErrorNotification(`${error}`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
             }
-        };
-
-        function shuffle(array) {
-            let currentIndex = array.length, randomIndex;
-
-            while (currentIndex !== 0) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex--;
-
-                [array[currentIndex], array[randomIndex]] = [
-                    array[randomIndex], array[currentIndex]];
-            }
-            return array;
         }
+    };
 
-        const getRecommendations = async (songId) => {
-            try {
-                const urlWithOptions = `${API_BASEURL}recommendations?limit=5&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
-                const url = `${API_BASEURL}recommendations?limit=5&seed_tracks=${songId}&target_popularity=20`;
+    function shuffle(array) {
+        let currentIndex = array.length, randomIndex;
 
-                let response;
-                if (sliderIsEnabled || secretSliderIsEnabled) {
-                    response = await axios.get(urlWithOptions, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        },
-                    });
-                } else {
-                    response = await axios.get(url, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        },
-                    });
-                }
-                return response.data.tracks;
-            } catch (error) {
-                console.error('Error fetching recommendations:', error);
-                return [];
-            }
-        };
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
 
-        const getTopSongs = async (e) => {
-            let shuffledRecomendations;
-            setSubmitClicked(false);
-            setSongName("");
-            setSongArtist("");
-            try {
-                const response = await fetch(API_BASEURL + 'me/top/tracks?limit=20&offset=0&time_range=short_term', {
+            [array[currentIndex], array[randomIndex]] = [
+                array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    const getRecommendations = async (songId) => {
+        try {
+            const urlWithOptions = `${API_BASEURL}recommendations?limit=5&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
+            const url = `${API_BASEURL}recommendations?limit=5&seed_tracks=${songId}&target_popularity=20`;
+
+            let response;
+            if (sliderIsEnabled || secretSliderIsEnabled) {
+                response = await axios.get(urlWithOptions, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
                 });
-
-                if (response.status === 401) {
-                    throw new Error('401');
-                }
-
-                if (response.status === 204) {
-                    throw new Error('204');
-                }
-
-                const data = await response.json();
-                const items = data.items;
-                const itemIds = items.map((item) => item.id);
-
-                const recommendations = await Promise.all(itemIds.map(getRecommendations));
-
-                const allRecommendations = recommendations.flat();
-
-                shuffledRecomendations = shuffle(allRecommendations);
-
-                const uniqueRecommendations = Array.from(new Set(shuffledRecomendations.map((track) => track.id))).map((id) =>
-                    shuffledRecomendations.find((track) => track.id === id)
-                );
-
-                setSimilarSongs(uniqueRecommendations);
-                setIsDisabled(false);
-
-            } catch (error) {
-                if (error.response && error.response.status === 401) {
-                    console.log('Invalid token, please login again');
-                    setErrorNotification(`Invalid token, please login again`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                        logout()
-                    }, 1500);
-                } else if (error.message === '400') {
-                    console.log('Invalid URL. Please use a Spotify song URL');
-                    setErrorNotification(`Something went wrong, please try again later`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                    }, 1500);
-                } else if (error.message === '401') {
-                    console.log('Invalid token, please login again');
-                    setErrorNotification(`Invalid token, please login again`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                        logout()
-                    }, 1500);
-                } else {
-                    console.error(error);
-                    setErrorNotification(`${error}`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                    }, 1500);
-                }
-            }
-        };
-
-        async function handleCurrentlyPlaying() {
-            try {
-                const response = await fetch(API_BASEURL + 'me/player/currently-playing', {
+            } else {
+                response = await axios.get(url, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                        'Authorization': `Bearer ${token}`,
+                    },
                 });
-                if (response.status === 401) {
-                    throw new Error('401');
-                }
-                if (response.status === 204) {
-                    throw new Error('204')
-                }
-                const data = await response.json();
-                const currentlyPlayingSongUrl = data.item.external_urls.spotify;
-                const currentSongName = data.item.name;
-                const currentSongArtist = data.item.artists[0].name
-
-                const songId = currentlyPlayingSongUrl.split('/').pop();
-                const urlWithOptions = API_BASEURL + `recommendations?limit=50&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
-                const url = API_BASEURL + `recommendations?limit=50&seed_tracks=${songId}&target_popularity=20`;
-
-                if (sliderIsEnabled || secretSliderIsEnabled) {
-                    const response = await axios.get(urlWithOptions, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        }
-                    });
-                    setSimilarSongs(response.data.tracks);
-                } else {
-                    const response = await axios.get(url, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                        }
-                    });
-                    setSimilarSongs(response.data.tracks);
-                }
-                setSongName(currentSongName);
-                setSongArtist(currentSongArtist);
-                setIsDisabled(false);
-            } catch (error) {
-                if (error.response && error.response.status === 401) {
-                    console.log('Invalid token, please login again');
-                    setErrorNotification(`Invalid token, please login again`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                        logout()
-                    }, 1500);
-                } else if (error.message === '400') {
-                    console.log('Invalid URL. Please use a Spotify song URL');
-                    setErrorNotification(`Invalid URL. Please use a Spotify song URL`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                    }, 1500);
-                } else if (error.message === '401') {
-                    console.log('Invalid token, please login again');
-                    setErrorNotification(`Invalid token, please login again`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                        logout()
-                    }, 1500);
-                } else if (error.message === '204') {
-                    console.log('No song is currently playing');
-                    setErrorNotification(`No song is currently playing`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                    }, 1500);
-                } else {
-                    console.error(error);
-                    setErrorNotification(`${error}`);
-                    setShowErrorNotification(true);
-                    setTimeout(() => {
-                        setShowErrorNotification(false);
-                    }, 1500);
-                }
             }
+            return response.data.tracks;
+        } catch (error) {
+            console.error('Error fetching recommendations:', error);
+            return [];
         }
-
-        return (<body className={`App ${theme}`}>
-            <div>
-                <header className="App-header">
-                    <img src={header_logo} alt={"SongVerse"} width={3300} height={800} />
-                </header>
-                <label>
-                    <input className='toggle-checkbox' type='checkbox' onChange={toggleTheme}></input>
-                    <div className='toggle-slot'>
-                        <div className='sun-icon-wrapper'>
-                            <div className="iconify sun-icon" data-icon="feather-sun" data-inline="false"></div>
-                        </div>
-                        <div className='toggle-button'></div>
-                        <div className='moon-icon-wrapper'>
-                            <div className="iconify moon-icon" data-icon="feather-moon" data-inline="false"></div>
-                        </div>
-                    </div>
-                </label>
-                {token ? (<div className={"main-page"}>
-                    <label htmlFor="song-link" className={"song-link-label"}>
-                        Paste a Spotify song or playlist url or leave empty to search for currently playing song:
-                    </label>
-                    <form className={"textbox"}>
-                        <input
-                            id="song-link"
-                            type="text"
-                            value={songLink}
-                            onChange={e => setSongLink(e.target.value)}
-                        />
-                    </form>
-                    <div className={"buttons"}>
-                        <div className="notification-container">
-                            <div className={`notification ${showNotification ? 'show' : ''}`}>
-                                {notification}
-                            </div>
-                        </div>
-                        <div className="error-notification-container">
-                            <div className={`error-notification ${showErrorNotification ? 'show' : ''}`}>
-                                {errorNotification}
-                            </div>
-                        </div>
-                        <button type="button" className={"btn btn-primary btn1"} onClick={handleSubmit} title="Search for song url or currently playing song">Search</button>
-                        <button className={'btn btn-secondary btn2'} onClick={getTopSongs} title="Search for recommendations based on your top songs">Surprise Me</button>
-                        <button id={"options-button"} className={"btn btn-secondary btn3"} onClick={handleClick}>Options
-                        </button>
-                        <button id="create-playlist" type="button" className={"btn btn-secondary btn4"}
-                            onClick={createPlaylist} disabled={isDisabled}>Create Playlist
-                        </button>
-                        <button type="button" className={"btn btn-secondary btn5"} onClick={logout}>Logout</button>
-                    </div>
-                    <div className="slidedown">
-                        {sliderIsEnabled && (<div className="slidedown-content">
-                            <div className="SlideDownMenu-content">
-                                <div className="menu-item">
-                                    <input type="checkbox" checked={isEnergyEnabled} onChange={handleEnergyCheckboxChange} />
-                                    <label>Energy:</label>
-                                    <input type="range" min="0" max="100" step="0.01" value={energy * 100}
-                                        onChange={handleEnergyChange} disabled={!isEnergyEnabled} />
-                                </div>
-                                <div className="menu-item">
-                                    <input type="checkbox" checked={isLoudnessEnabled} onChange={handleLoudnessCheckboxChange} />
-                                    <label>Loudness:</label>
-                                    <input type="range" min="0" max="100" step="0.01" value={loudness * 100}
-                                        onChange={handleLoudnessChange} disabled={!isLoudnessEnabled} />
-                                </div>
-                                <div className="menu-item">
-                                    <input type="checkbox" checked={isDanceabilityEnabled}
-                                        onChange={handleDanceabilityCheckboxChange} />
-                                    <label>Danceability:</label>
-                                    <input type="range" min="0" max="100" step="0.01" value={danceability * 100}
-                                        onChange={handleDanceabilityChange} disabled={!isDanceabilityEnabled} />
-                                </div>
-                                <div className="menu-item">
-                                    <input type="checkbox" checked={isValenceEnabled} onChange={handleValenceCheckboxChange} />
-                                    <label>Happiness:</label>
-                                    <input type="range" min="0" max="100" step="0.01" value={valence * 100}
-                                        onChange={handleValenceChange} disabled={!isValenceEnabled} />
-                                </div>
-                            </div>
-                        </div>)}
-                        {secretSliderIsEnabled && (<div className="secret-slidedown-content">
-                            <div className="SlideDownMenu-content">
-                                <div className="menu-item">
-                                    <input type="checkbox" checked={isPopularityEnabled}
-                                        onChange={handlePopularityCheckboxChange} />
-                                    <label>Popularity:</label>
-                                    <input type="range" min="0" max="100" step="1" value={popularity}
-                                        onChange={handlePopularityChange} disabled={!isPopularityEnabled} />
-                                </div>
-                            </div>
-                        </div>)}
-                    </div>
-                    {similarSongs.length > 0 && submitClicked && songName && songArtist ? (
-                        <div className="currently-playing">
-                            <p>Currently searching for: {songName} by {songArtist}</p>
-                        </div>
-                    ) : null}
-                    <div className="song-grid">
-                        {similarSongs.length > 0 && similarSongs.map(song => (<a href={song.uri}>
-                            <div className="song" key={song.id}>
-                                <img src={song.album?.images?.[0]?.url} alt={`${song.name} album cover`} />
-                                <div className="song-info">
-                                    <h5>{song.name}</h5>
-                                    <p>{song.artists[0].name}</p>
-                                </div>
-                                <a className={"song-link"} href={song.uri}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        className="bi bi-spotify" viewBox="0 0 18 18">
-                                        <path
-                                            d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.669 11.538a.498.498 0 0 1-.686.165c-1.879-1.147-4.243-1.407-7.028-.77a.499.499 0 0 1-.222-.973c3.048-.696 5.662-.397 7.77.892a.5.5 0 0 1 .166.686zm.979-2.178a.624.624 0 0 1-.858.205c-2.15-1.321-5.428-1.704-7.972-.932a.625.625 0 0 1-.362-1.194c2.905-.881 6.517-.454 8.986 1.063a.624.624 0 0 1 .206.858zm.084-2.268C10.154 5.56 5.9 5.419 3.438 6.166a.748.748 0 1 1-.434-1.432c2.825-.857 7.523-.692 10.492 1.07a.747.747 0 1 1-.764 1.288z" />
-                                    </svg>
-                                    Play on Spotify
-                                </a>
-                            </div>
-                        </a>))}
-                    </div>
-                </div>) : (<body>
-                    <div className={"login-page"}>
-                        <p className={"paragraph"}>
-                            <p1>With this app you can provide a Spotify song link and get a list of 50 similar songs,
-                                but
-                                very unpopular ones. It's like a Spotify Song Radio, but with songs you probably don't
-                                know
-                                yet.
-                            </p1>
-                        </p>
-                        <br />
-                        {!token ? <a type="button" className="btn btn-success"
-                            href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                className="bi bi-spotify" viewBox="0 0 18 18">
-                                <path
-                                    d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.669 11.538a.498.498 0 0 1-.686.165c-1.879-1.147-4.243-1.407-7.028-.77a.499.499 0 0 1-.222-.973c3.048-.696 5.662-.397 7.77.892a.5.5 0 0 1 .166.686zm.979-2.178a.624.624 0 0 1-.858.205c-2.15-1.321-5.428-1.704-7.972-.932a.625.625 0 0 1-.362-1.194c2.905-.881 6.517-.454 8.986 1.063a.624.624 0 0 1 .206.858zm.084-2.268C10.154 5.56 5.9 5.419 3.438 6.166a.748.748 0 1 1-.434-1.432c2.825-.857 7.523-.692 10.492 1.07a.747.747 0 1 1-.764 1.288z" />
-                            </svg>
-                            Login to Spotify</a> : <button onClick={logout}>Logout</button>}
-                    </div>
-                    <script
-                        src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-                        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-                        crossOrigin="anonymous"
-                    ></script>
-                    <script src="switch.js"></script>
-                </body>)}
-            </div>
-        </body>);
     };
 
-    export default App;
+    const getTopSongs = async (e) => {
+        let shuffledRecomendations;
+        setSubmitClicked(false);
+        setSongName("");
+        setSongArtist("");
+        try {
+            const response = await fetch(API_BASEURL + 'me/top/tracks?limit=20&offset=0&time_range=short_term', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.status === 401) {
+                throw new Error('401');
+            }
+
+            if (response.status === 204) {
+                throw new Error('204');
+            }
+
+            const data = await response.json();
+            const items = data.items;
+            const itemIds = items.map((item) => item.id);
+
+            const recommendations = await Promise.all(itemIds.map(getRecommendations));
+
+            const allRecommendations = recommendations.flat();
+
+            shuffledRecomendations = shuffle(allRecommendations);
+
+            const uniqueRecommendations = Array.from(new Set(shuffledRecomendations.map((track) => track.id))).map((id) =>
+                shuffledRecomendations.find((track) => track.id === id)
+            );
+
+            setSimilarSongs(uniqueRecommendations);
+            setIsDisabled(false);
+
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                console.log('Invalid token, please login again');
+                setErrorNotification(`Invalid token, please login again`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                    logout()
+                }, 1500);
+            } else if (error.message === '400') {
+                console.log('Invalid URL. Please use a Spotify song URL');
+                setErrorNotification(`Something went wrong, please try again later`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
+            } else if (error.message === '401') {
+                console.log('Invalid token, please login again');
+                setErrorNotification(`Invalid token, please login again`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                    logout()
+                }, 1500);
+            } else {
+                console.error(error);
+                setErrorNotification(`${error}`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
+            }
+        }
+    };
+
+    async function handleCurrentlyPlaying() {
+        try {
+            const response = await fetch(API_BASEURL + 'me/player/currently-playing', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status === 401) {
+                throw new Error('401');
+            }
+            if (response.status === 204) {
+                throw new Error('204')
+            }
+            const data = await response.json();
+            const currentlyPlayingSongUrl = data.item.external_urls.spotify;
+            const currentSongName = data.item.name;
+            const currentSongArtist = data.item.artists[0].name
+
+            const songId = currentlyPlayingSongUrl.split('/').pop();
+            const urlWithOptions = API_BASEURL + `recommendations?limit=50&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
+            const url = API_BASEURL + `recommendations?limit=50&seed_tracks=${songId}&target_popularity=20`;
+
+            if (sliderIsEnabled || secretSliderIsEnabled) {
+                const response = await axios.get(urlWithOptions, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+                setSimilarSongs(response.data.tracks);
+            } else {
+                const response = await axios.get(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+                setSimilarSongs(response.data.tracks);
+            }
+            setSongName(currentSongName);
+            setSongArtist(currentSongArtist);
+            setIsDisabled(false);
+        } catch (error) {
+            if (error.response && error.response.status === 401) {
+                console.log('Invalid token, please login again');
+                setErrorNotification(`Invalid token, please login again`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                    logout()
+                }, 1500);
+            } else if (error.message === '400') {
+                console.log('Invalid URL. Please use a Spotify song URL');
+                setErrorNotification(`Invalid URL. Please use a Spotify song URL`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
+            } else if (error.message === '401') {
+                console.log('Invalid token, please login again');
+                setErrorNotification(`Invalid token, please login again`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                    logout()
+                }, 1500);
+            } else if (error.message === '204') {
+                console.log('No song is currently playing');
+                setErrorNotification(`No song is currently playing`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
+            } else {
+                console.error(error);
+                setErrorNotification(`${error}`);
+                setShowErrorNotification(true);
+                setTimeout(() => {
+                    setShowErrorNotification(false);
+                }, 1500);
+            }
+        }
+    }
+
+    return (<div className={`App ${theme}`}>
+        <div>
+            <header className="App-header">
+                <img src={header_logo} alt={"SongVerse"} width={3300} height={800} />
+            </header>
+            <label>
+                <input className='toggle-checkbox' type='checkbox' onChange={toggleTheme}></input>
+                <div className='toggle-slot'>
+                    <div className='sun-icon-wrapper'>
+                        <div className="iconify sun-icon" data-icon="feather-sun" data-inline="false"></div>
+                    </div>
+                    <div className='toggle-button'></div>
+                    <div className='moon-icon-wrapper'>
+                        <div className="iconify moon-icon" data-icon="feather-moon" data-inline="false"></div>
+                    </div>
+                </div>
+            </label>
+            {token ? (<div className={"main-page"}>
+                <label htmlFor="song-link" className={"song-link-label"}>
+                    Paste a Spotify song or playlist url or leave empty to search for currently playing song:
+                </label>
+                <form className={"textbox"}>
+                    <input
+                        id="song-link"
+                        type="text"
+                        value={songLink}
+                        onChange={e => setSongLink(e.target.value)}
+                    />
+                </form>
+                <div className={"buttons"}>
+                    <div className="notification-container">
+                        <div className={`notification ${showNotification ? 'show' : ''}`}>
+                            {notification}
+                        </div>
+                    </div>
+                    <div className="error-notification-container">
+                        <div className={`error-notification ${showErrorNotification ? 'show' : ''}`}>
+                            {errorNotification}
+                        </div>
+                    </div>
+                    <button type="button" className={"btn btn-primary btn1"} onClick={handleSubmit} title="Search for song url or currently playing song">Search</button>
+                    <button className={'btn btn-secondary btn2'} onClick={getTopSongs} title="Search for recommendations based on your top songs">Surprise Me</button>
+                    <button id={"options-button"} className={"btn btn-secondary btn3"} onClick={handleClick}>Options
+                    </button>
+                    <button id="create-playlist" type="button" className={"btn btn-secondary btn4"}
+                        onClick={createPlaylist} disabled={isDisabled}>Create Playlist
+                    </button>
+                    <button type="button" className={"btn btn-secondary btn5"} onClick={logout}>Logout</button>
+                </div>
+                <div className="slidedown">
+                    {sliderIsEnabled && (<div className="slidedown-content">
+                        <div className="SlideDownMenu-content">
+                            <div className="menu-item">
+                                <input type="checkbox" checked={isEnergyEnabled} onChange={handleEnergyCheckboxChange} />
+                                <label>Energy:</label>
+                                <input type="range" min="0" max="100" step="0.01" value={energy * 100}
+                                    onChange={handleEnergyChange} disabled={!isEnergyEnabled} />
+                            </div>
+                            <div className="menu-item">
+                                <input type="checkbox" checked={isLoudnessEnabled} onChange={handleLoudnessCheckboxChange} />
+                                <label>Loudness:</label>
+                                <input type="range" min="0" max="100" step="0.01" value={loudness * 100}
+                                    onChange={handleLoudnessChange} disabled={!isLoudnessEnabled} />
+                            </div>
+                            <div className="menu-item">
+                                <input type="checkbox" checked={isDanceabilityEnabled}
+                                    onChange={handleDanceabilityCheckboxChange} />
+                                <label>Danceability:</label>
+                                <input type="range" min="0" max="100" step="0.01" value={danceability * 100}
+                                    onChange={handleDanceabilityChange} disabled={!isDanceabilityEnabled} />
+                            </div>
+                            <div className="menu-item">
+                                <input type="checkbox" checked={isValenceEnabled} onChange={handleValenceCheckboxChange} />
+                                <label>Happiness:</label>
+                                <input type="range" min="0" max="100" step="0.01" value={valence * 100}
+                                    onChange={handleValenceChange} disabled={!isValenceEnabled} />
+                            </div>
+                        </div>
+                    </div>)}
+                    {secretSliderIsEnabled && (<div className="secret-slidedown-content">
+                        <div className="SlideDownMenu-content">
+                            <div className="menu-item">
+                                <input type="checkbox" checked={isPopularityEnabled}
+                                    onChange={handlePopularityCheckboxChange} />
+                                <label>Popularity:</label>
+                                <input type="range" min="0" max="100" step="1" value={popularity}
+                                    onChange={handlePopularityChange} disabled={!isPopularityEnabled} />
+                            </div>
+                        </div>
+                    </div>)}
+                </div>
+                {similarSongs.length > 0 && submitClicked && songName && songArtist ? (
+                    <div className="currently-playing">
+                        <p>Currently searching for: {songName} by {songArtist}</p>
+                    </div>
+                ) : null}
+                <div className="song-grid">
+                    {similarSongs.length > 0 && similarSongs.map(song => (<a href={song.uri}>
+                        <div className="song" key={song.id}>
+                            <img src={song.album?.images?.[0]?.url} alt={`${song.name} album cover`} />
+                            <div className="song-info">
+                                <h5>{song.name}</h5>
+                                <p>{song.artists[0].name}</p>
+                            </div>
+                            <a className={"song-link"} href={song.uri}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                    className="bi bi-spotify" viewBox="0 0 18 18">
+                                    <path
+                                        d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.669 11.538a.498.498 0 0 1-.686.165c-1.879-1.147-4.243-1.407-7.028-.77a.499.499 0 0 1-.222-.973c3.048-.696 5.662-.397 7.77.892a.5.5 0 0 1 .166.686zm.979-2.178a.624.624 0 0 1-.858.205c-2.15-1.321-5.428-1.704-7.972-.932a.625.625 0 0 1-.362-1.194c2.905-.881 6.517-.454 8.986 1.063a.624.624 0 0 1 .206.858zm.084-2.268C10.154 5.56 5.9 5.419 3.438 6.166a.748.748 0 1 1-.434-1.432c2.825-.857 7.523-.692 10.492 1.07a.747.747 0 1 1-.764 1.288z" />
+                                </svg>
+                                Play on Spotify
+                            </a>
+                        </div>
+                    </a>))}
+                </div>
+            </div>) : (<div>
+                <div className={"login-page"}>
+                    <p className={"paragraph"}>
+                        With this app you can provide a Spotify song link and get a list of 50 similar songs,
+                            but
+                            very unpopular ones. It's like a Spotify Song Radio, but with songs you probably don't
+                            know
+                            yet.
+                    </p>
+                    <br />
+                    {!token ? <a type="button" className="btn btn-success"
+                        href={`${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                            className="bi bi-spotify" viewBox="0 0 18 18">
+                            <path
+                                d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.669 11.538a.498.498 0 0 1-.686.165c-1.879-1.147-4.243-1.407-7.028-.77a.499.499 0 0 1-.222-.973c3.048-.696 5.662-.397 7.77.892a.5.5 0 0 1 .166.686zm.979-2.178a.624.624 0 0 1-.858.205c-2.15-1.321-5.428-1.704-7.972-.932a.625.625 0 0 1-.362-1.194c2.905-.881 6.517-.454 8.986 1.063a.624.624 0 0 1 .206.858zm.084-2.268C10.154 5.56 5.9 5.419 3.438 6.166a.748.748 0 1 1-.434-1.432c2.825-.857 7.523-.692 10.492 1.07a.747.747 0 1 1-.764 1.288z" />
+                        </svg>
+                        Login to Spotify</a> : <button onClick={logout}>Logout</button>}
+                </div>
+                <script
+                    src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+                    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+                    crossOrigin="anonymous"
+                ></script>
+                <script src="switch.js"></script>
+            </div>)}
+        </div>
+    </div>);
+};
+
+export default App;
