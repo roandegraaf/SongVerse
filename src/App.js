@@ -332,45 +332,55 @@ const App = () => {
         const trackUris = similarSongs.map(r => r.uri);
         const numUris = trackUris.length;
 
-        if (numUris <= MAX_URIS_PER_REQUEST) {
-            await fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    uris: trackUris
-                })
-            }, [])
-        } else {
-            const firstHalf = trackUris.slice(0, MAX_URIS_PER_REQUEST);
-            const secondHalf = trackUris.slice(MAX_URIS_PER_REQUEST);
+        try {
+            if (numUris <= MAX_URIS_PER_REQUEST) {
+                await fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        uris: trackUris
+                    })
+                }, [])
+            } else {
+                const firstHalf = trackUris.slice(0, MAX_URIS_PER_REQUEST);
+                const secondHalf = trackUris.slice(MAX_URIS_PER_REQUEST);
 
-            await Promise.all([
-                fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        uris: firstHalf
+                await Promise.all([
+                    fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            uris: firstHalf
+                        })
+                    }),
+                    fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            uris: secondHalf
+                        })
                     })
-                }),
-                fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        uris: secondHalf
-                    })
-                })
-            ])
+                ])
+            }
+        } catch (error) {
+            console.error('Error creating playlist:', error);
+            setErrorNotification('Error creating playlist');
+            setShowErrorNotification(true);
+            setTimeout(() => {
+                setShowErrorNotification(false);
+            }, 1500);
         }
     }
+
 
     const logout = () => {
         setToken("");
@@ -831,10 +841,10 @@ const App = () => {
                 <div className={"login-page"}>
                     <p className={"paragraph"}>
                         With this app you can provide a Spotify song link and get a list of 50 similar songs,
-                            but
-                            very unpopular ones. It's like a Spotify Song Radio, but with songs you probably don't
-                            know
-                            yet.
+                        but
+                        very unpopular ones. It's like a Spotify Song Radio, but with songs you probably don't
+                        know
+                        yet.
                     </p>
                     <br />
                     {!token ? <a type="button" className="btn btn-success"
