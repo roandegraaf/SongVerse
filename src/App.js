@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-import header_logo from './logo/header_big.png'
+import header_logo from './logo/header_big_cat.png'
 import playlist_overlay from './logo/playlist_overlay.png'
 
 const App = () => {
