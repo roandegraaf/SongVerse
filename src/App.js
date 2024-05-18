@@ -222,6 +222,7 @@ const App = () => {
             console.error('Error creating playlist:', error);
             setErrorNotification('Error creating playlist');
             setShowErrorNotification(true);
+            setIsDisabled(false);
             setTimeout(() => {
                 setShowErrorNotification(false);
             }, 1500);
@@ -329,10 +330,19 @@ const App = () => {
             return;
         }
 
-        const trackUris = similarSongs.map(r => r.uri);
+        try {
+            let userSongUri = '';
+            if (songLink) {
+                const songExtract = songLink.split('/').pop();
+                const songId = songExtract.split('?')[0];
+                userSongUri = `spotify:track:${songId}`;
+            }
+
+        const similarTrackUris = similarSongs.map(r => r.uri);
+        const trackUris = userSongUri ? [userSongUri, ...similarTrackUris] : similarTrackUris;
+        console.log(trackUris);
         const numUris = trackUris.length;
 
-        try {
             if (numUris <= MAX_URIS_PER_REQUEST) {
                 await fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
                     method: 'POST',
@@ -375,11 +385,13 @@ const App = () => {
             console.error('Error creating playlist:', error);
             setErrorNotification('Error creating playlist');
             setShowErrorNotification(true);
+            setIsDisabled(false);
             setTimeout(() => {
                 setShowErrorNotification(false);
             }, 1500);
         }
-    }
+    } 
+
 
 
     const logout = () => {
@@ -656,7 +668,9 @@ const App = () => {
             const data = await response.json();
             const currentlyPlayingSongUrl = data.item.external_urls.spotify;
             const currentSongName = data.item.name;
-            const currentSongArtist = data.item.artists[0].name
+            const currentSongArtist = data.item.artists[0].name;
+
+            setSongLink(currentlyPlayingSongUrl);
 
             const songId = currentlyPlayingSongUrl.split('/').pop();
             const urlWithOptions = API_BASEURL + `recommendations?limit=50&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
