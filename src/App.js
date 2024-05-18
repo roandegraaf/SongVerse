@@ -8,6 +8,7 @@ import playlist_overlay from './logo/playlist_overlay.png'
 const App = () => {
     const [similarSongs, setSimilarSongs] = useState([]);
     const [songLink, setSongLink] = useState('');
+    const [songPlaylistLink, setSongPlaylistLink] = useState('');
     const [playlistId, setPlaylistId] = useState(null);
     const [songName, setSongName] = useState('');
     const [inputPlaylistName, setInputPlaylistName] = useState('');
@@ -238,8 +239,8 @@ const App = () => {
         const albumCovers = similarSongs.slice(0, 4).map((song) => song.album.images[0].url);
 
         const canvas = document.createElement('canvas');
-        canvas.width = 650;
-        canvas.height = 650;
+        canvas.width = 600;
+        canvas.height = 600;
         const context = canvas.getContext('2d');
 
         const images = await Promise.all(albumCovers.map((url) => {
@@ -261,9 +262,9 @@ const App = () => {
         })));
 
         images.forEach((img, index) => {
-            const x = (index % 2) * 325;
-            const y = Math.floor(index / 2) * 325;
-            context.drawImage(img, x, y, 325, 325);
+            const x = (index % 2) * 300;
+            const y = Math.floor(index / 2) * 300;
+            context.drawImage(img, x, y, 300, 300);
         });
 
         const logo = new Image();
@@ -275,7 +276,7 @@ const App = () => {
                 logo.onload = resolve;
             }
         });
-        context.drawImage(logo, 0, 0, 650, 650);
+        context.drawImage(logo, 0, 0, 600, 600);
 
         const dataURL = canvas.toDataURL('image/jpeg');
         setPlaylistImage(dataURL);
@@ -286,6 +287,8 @@ const App = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [playlistImage]);
 
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
     const postPlaylistImage = async () => {
         if (!playlistId) {
             return;
@@ -294,6 +297,8 @@ const App = () => {
         const imageBase64 = playlistImage.replace(/^data:image\/jpeg;base64,/, '');
 
         try {
+            await delay(2000);
+
             await fetch(API_BASEURL + `playlists/${playlistId}/images`, {
                 method: 'PUT',
                 headers: {
@@ -323,7 +328,7 @@ const App = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [playlistId]);
 
-    const MAX_URIS_PER_REQUEST = 50;
+    const MAX_URIS_PER_REQUEST = 100;
 
     async function addSongsToPlaylist() {
         if (!playlistId || !token) {
@@ -332,15 +337,14 @@ const App = () => {
 
         try {
             let userSongUri = '';
-            if (songLink) {
-                const songExtract = songLink.split('/').pop();
+            if (songPlaylistLink) {
+                const songExtract = songPlaylistLink.split('/').pop();
                 const songId = songExtract.split('?')[0];
                 userSongUri = `spotify:track:${songId}`;
             }
 
         const similarTrackUris = similarSongs.map(r => r.uri);
         const trackUris = userSongUri ? [userSongUri, ...similarTrackUris] : similarTrackUris;
-        console.log(trackUris);
         const numUris = trackUris.length;
 
             if (numUris <= MAX_URIS_PER_REQUEST) {
@@ -670,7 +674,7 @@ const App = () => {
             const currentSongName = data.item.name;
             const currentSongArtist = data.item.artists[0].name;
 
-            setSongLink(currentlyPlayingSongUrl);
+            setSongPlaylistLink(currentlyPlayingSongUrl);
 
             const songId = currentlyPlayingSongUrl.split('/').pop();
             const urlWithOptions = API_BASEURL + `recommendations?limit=50&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
