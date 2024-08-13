@@ -343,9 +343,9 @@ const App = () => {
                 userSongUri = `spotify:track:${songId}`;
             }
 
-        const similarTrackUris = similarSongs.map(r => r.uri);
-        const trackUris = userSongUri ? [userSongUri, ...similarTrackUris] : similarTrackUris;
-        const numUris = trackUris.length;
+            const similarTrackUris = similarSongs.map(r => r.uri);
+            const trackUris = userSongUri ? [userSongUri, ...similarTrackUris] : similarTrackUris;
+            const numUris = trackUris.length;
 
             if (numUris <= MAX_URIS_PER_REQUEST) {
                 await fetch(API_BASEURL + `playlists/${playlistId}/tracks`, {
@@ -394,7 +394,7 @@ const App = () => {
                 setShowErrorNotification(false);
             }, 1500);
         }
-    } 
+    }
 
 
     const logout = () => {
@@ -832,11 +832,20 @@ const App = () => {
                         </div>
                     </div>)}
                 </div>
-                {similarSongs.length > 0 && submitClicked && songName && songArtist ? (
-                    <div className="currently-playing">
-                        <p>Currently searching for: {songName} by {songArtist}</p>
-                    </div>
+                {similarSongs.length > 0 && submitClicked ? (
+                    songName ? (
+                        <div className="currently-playing">
+                            <p>Currently searching for: {songName} by {songArtist}</p>
+                        </div>
+                    ) : (
+                        inputPlaylistName && (
+                            <div className="currently-playing">
+                                <p>Currently searching for playlist: {inputPlaylistName}</p>
+                            </div>
+                        )
+                    )
                 ) : null}
+
                 <div className="song-grid">
                     {similarSongs.length > 0 && similarSongs.map(song => (<a href={song.uri}>
                         <div className="song" key={song.id}>
