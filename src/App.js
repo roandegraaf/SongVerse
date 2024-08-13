@@ -297,7 +297,7 @@ const App = () => {
         const imageBase64 = playlistImage.replace(/^data:image\/jpeg;base64,/, '');
 
         try {
-            await delay(2000);
+            await delay(2300);
 
             await fetch(API_BASEURL + `playlists/${playlistId}/images`, {
                 method: 'PUT',
@@ -397,7 +397,6 @@ const App = () => {
     } 
 
 
-
     const logout = () => {
         setToken("");
         setExpirationTime("");
@@ -462,6 +461,8 @@ const App = () => {
 
                 const inputPlaylistNameData = await playlistNameRequest.json();
                 const tempPlaylistName = inputPlaylistNameData.name;
+                setSongName('');
+                setSongArtist('');
                 setInputPlaylistName(tempPlaylistName);
 
                 setSimilarSongs(uniqueRecommendations);
