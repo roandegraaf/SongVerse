@@ -53,20 +53,6 @@ const App = () => {
     const [secretSliderIsEnabled, setSecretSliderIsEnabled] = useState(false);
     const [buttonClickCount, setButtonClickCount] = useState(0);
 
-    const [isMinKeyEnabled, setIsMinKeyEnabled] = useState(false);
-    const [isMaxKeyEnabled, setIsMaxKeyEnabled] = useState(false);
-    const [isTargetKeyEnabled, setIsTargetKeyEnabled] = useState(false);
-    const [isMinTempoEnabled, setIsMinTempoEnabled] = useState(false);
-    const [isMaxTempoEnabled, setIsMaxTempoEnabled] = useState(false);
-    const [isTargetTempoEnabled, setIsTargetTempoEnabled] = useState(false);
-    const [minKey, setMinKey] = useState(0);
-    const [maxKey, setMaxKey] = useState(11);
-    const [targetKey, setTargetKey] = useState(6);
-    const [minTempo, setMinTempo] = useState(60);
-    const [maxTempo, setMaxTempo] = useState(220);
-    const [targetTempo, setTargetTempo] = useState(120);
-    const [isDJOptionsVisible, setIsDJOptionsVisible] = useState(false);
-
     const getQueryParams = () => {
         const params = [];
         if (isEnergyEnabled) {
@@ -84,30 +70,8 @@ const App = () => {
         if (isPopularityEnabled) {
             params.push(`target_popularity=${popularity}`)
         }
-        if (isMinKeyEnabled) {
-            params.push(`min_key=${minKey}`);
-        }
-        if (isMaxKeyEnabled) {
-            params.push(`max_key=${maxKey}`);
-        }
-        if (isTargetKeyEnabled) {
-            params.push(`target_key=${targetKey}`);
-        }
-        if (isMinTempoEnabled) {
-            params.push(`min_tempo=${minTempo}`);
-        }
-        if (isMaxTempoEnabled) {
-            params.push(`max_tempo=${maxTempo}`);
-        }
-        if (isTargetTempoEnabled) {
-            params.push(`target_tempo=${targetTempo}`);
-        }
-
-        console.log(params)
-
         return params.join('&');
     };
-
 
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
     const toggleTheme = () => {
@@ -157,58 +121,6 @@ const App = () => {
     const handlePopularityCheckboxChange = () => {
         setIsPopularityEnabled(!isPopularityEnabled);
     }
-
-    const handleDJOptionsClick = () => {
-        setIsDJOptionsVisible(!isDJOptionsVisible);
-    };
-
-    const handleMinKeyCheckboxChange = () => {
-        setIsMinKeyEnabled(!isMinKeyEnabled);
-    };
-
-    const handleMaxKeyCheckboxChange = () => {
-        setIsMaxKeyEnabled(!isMaxKeyEnabled);
-    };
-
-    const handleTargetKeyCheckboxChange = () => {
-        setIsTargetKeyEnabled(!isTargetKeyEnabled);
-    };
-
-    const handleMinTempoCheckboxChange = () => {
-        setIsMinTempoEnabled(!isMinTempoEnabled);
-    };
-
-    const handleMaxTempoCheckboxChange = () => {
-        setIsMaxTempoEnabled(!isMaxTempoEnabled);
-    };
-
-    const handleTargetTempoCheckboxChange = () => {
-        setIsTargetTempoEnabled(!isTargetTempoEnabled);
-    };
-
-    const handleMinKeyChange = (event) => {
-        setMinKey(event.target.value);
-    };
-
-    const handleMaxKeyChange = (event) => {
-        setMaxKey(event.target.value);
-    };
-
-    const handleTargetKeyChange = (event) => {
-        setTargetKey(event.target.value);
-    };
-
-    const handleMinTempoChange = (event) => {
-        setMinTempo(event.target.value);
-    };
-
-    const handleMaxTempoChange = (event) => {
-        setMaxTempo(event.target.value);
-    };
-
-    const handleTargetTempoChange = (event) => {
-        setTargetTempo(event.target.value);
-    };
 
     const handleClick = () => {
         setSliderIsEnabled(!sliderIsEnabled);
@@ -573,7 +485,7 @@ const App = () => {
                 const currentSongName = songData.name;
                 const currentSongArtist = songData.artists[0].name
 
-                if (sliderIsEnabled || secretSliderIsEnabled || isDJOptionsVisible) {
+                if (sliderIsEnabled || secretSliderIsEnabled) {
                     const response = await axios.get(urlWithOptions, {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -769,7 +681,7 @@ const App = () => {
             const urlWithOptions = API_BASEURL + `recommendations?limit=50&market=NL&seed_tracks=${songId}&${getQueryParams()}`;
             const url = API_BASEURL + `recommendations?limit=50&seed_tracks=${songId}&target_popularity=20`;
 
-            if (sliderIsEnabled || secretSliderIsEnabled || isDJOptionsVisible) {
+            if (sliderIsEnabled || secretSliderIsEnabled) {
                 const response = await axios.get(urlWithOptions, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -871,136 +783,13 @@ const App = () => {
                     </div>
                     <button type="button" className={"btn btn-primary btn1"} onClick={handleSubmit} title="Search for song url or currently playing song">Search</button>
                     <button className={'btn btn-secondary btn2'} onClick={getTopSongs} title="Search for recommendations based on your top songs">Surprise Me</button>
-                    <button id={"options-button"} className={"btn btn-secondary btn3"} onClick={handleClick}>{sliderIsEnabled ? 'Hide Options' : 'Show Options'}
-                    </button>
-                    <button
-                        id="dj-options-button"
-                        className="btn btn-secondary btn3"
-                        onClick={handleDJOptionsClick}
-                    >
-                        {isDJOptionsVisible ? 'Hide DJ Options' : 'Show DJ Options'}
+                    <button id={"options-button"} className={"btn btn-secondary btn3"} onClick={handleClick}>Options
                     </button>
                     <button id="create-playlist" type="button" className={"btn btn-secondary btn4"}
                         onClick={createPlaylist} disabled={isDisabled}>Create Playlist
                     </button>
                     <button type="button" className={"btn btn-secondary btn5"} onClick={logout}>Logout</button>
                 </div>
-                {isDJOptionsVisible && (
-                    <div className="slidedown">
-                        <div className="slidedown-content">
-                            <div className="SlideDownMenu-content">
-                                <div className="menu-item">
-                                    <input
-                                        type="checkbox"
-                                        checked={isMinKeyEnabled}
-                                        onChange={handleMinKeyCheckboxChange}
-                                    />
-                                    <label>Min Key:</label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="11"
-                                        step="1"
-                                        value={minKey}
-                                        onChange={handleMinKeyChange}
-                                        disabled={!isMinKeyEnabled}
-                                    />
-                                    <span>{minKey}</span>
-                                </div>
-                                <div className="menu-item">
-                                    <input
-                                        type="checkbox"
-                                        checked={isMaxKeyEnabled}
-                                        onChange={handleMaxKeyCheckboxChange}
-                                    />
-                                    <label>Max Key:</label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="11"
-                                        step="1"
-                                        value={maxKey}
-                                        onChange={handleMaxKeyChange}
-                                        disabled={!isMaxKeyEnabled}
-                                    />
-                                    <span>{maxKey}</span>
-                                </div>
-                                <div className="menu-item">
-                                    <input
-                                        type="checkbox"
-                                        checked={isTargetKeyEnabled}
-                                        onChange={handleTargetKeyCheckboxChange}
-                                    />
-                                    <label>Target Key:</label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="11"
-                                        step="1"
-                                        value={targetKey}
-                                        onChange={handleTargetKeyChange}
-                                        disabled={!isTargetKeyEnabled}
-                                    />
-                                    <span>{targetKey}</span>
-                                </div>
-                                <div className="menu-item">
-                                    <input
-                                        type="checkbox"
-                                        checked={isMinTempoEnabled}
-                                        onChange={handleMinTempoCheckboxChange}
-                                    />
-                                    <label>Min Tempo:</label>
-                                    <input
-                                        type="range"
-                                        min="60"
-                                        max="220"
-                                        step="1"
-                                        value={minTempo}
-                                        onChange={handleMinTempoChange}
-                                        disabled={!isMinTempoEnabled}
-                                    />
-                                    <span>{minTempo}</span>
-                                </div>
-                                <div className="menu-item">
-                                    <input
-                                        type="checkbox"
-                                        checked={isMaxTempoEnabled}
-                                        onChange={handleMaxTempoCheckboxChange}
-                                    />
-                                    <label>Max Tempo:</label>
-                                    <input
-                                        type="range"
-                                        min="60"
-                                        max="220"
-                                        step="1"
-                                        value={maxTempo}
-                                        onChange={handleMaxTempoChange}
-                                        disabled={!isMaxTempoEnabled}
-                                    />
-                                    <span>{maxTempo}</span>
-                                </div>
-                                <div className="menu-item">
-                                    <input
-                                        type="checkbox"
-                                        checked={isTargetTempoEnabled}
-                                        onChange={handleTargetTempoCheckboxChange}
-                                    />
-                                    <label>Target Tempo:</label>
-                                    <input
-                                        type="range"
-                                        min="60"
-                                        max="220"
-                                        step="1"
-                                        value={targetTempo}
-                                        onChange={handleTargetTempoChange}
-                                        disabled={!isTargetTempoEnabled}
-                                    />
-                                    <span>{targetTempo}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
                 <div className="slidedown">
                     {sliderIsEnabled && (<div className="slidedown-content">
                         <div className="SlideDownMenu-content">
